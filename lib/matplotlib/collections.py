@@ -893,7 +893,6 @@ class RegularPolyCollection(_CollectionWithSizes):
                 )
         """
         Collection.__init__(self, **kwargs)
-        self.set_sizes(sizes)
         self._numsides = numsides
         self._paths = [self._path_generator(numsides)]
         self._rotation = rotation
