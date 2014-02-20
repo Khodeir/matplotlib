@@ -1827,10 +1827,12 @@ class XAxis(Axis):
     def tick_top(self):
         'use ticks only on top'
         self.set_ticks_position('top')
+        self.axes.check_ticker_conflict(self.axes.title)
 
     def tick_bottom(self):
         'use ticks only on bottom'
         self.set_ticks_position('bottom')
+        self.axes.check_ticker_conflict(self.axes.title)
 
     def get_ticks_position(self):
         """

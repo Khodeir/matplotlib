@@ -142,6 +142,14 @@ class Axes(_AxesBase):
         if fontdict is not None:
             title.update(fontdict)
         title.update(kwargs)
+        title = self.check_ticker_conflict(title)
+        return title
+
+    def check_ticker_conflict(self, title):
+        if not self.xaxis._get_tick(True).tick1On and not self.xaxis._get_tick(True).label1On:
+            title.update({'y':-0.1})
+        elif not self.xaxis._get_tick(True).tick2On and not self.xaxis._get_tick(True).label2On:
+            title.update({'y':1})
         return title
 
     def get_xlabel(self):
