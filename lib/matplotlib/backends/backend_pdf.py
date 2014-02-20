@@ -2096,6 +2096,12 @@ class RendererPdf(RendererBase):
     def new_gc(self):
         return GraphicsContextPdf(self.file)
 
+    #overriden to allow rendering to pdf to repect zorder 
+    #Issue 2517
+    def option_image_nocomposite(self):
+        #dont do a composite image
+        return True
+
 
 class GraphicsContextPdf(GraphicsContextBase):
 
