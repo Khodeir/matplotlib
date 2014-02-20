@@ -1007,9 +1007,10 @@ def _candlestick(ax, quotes, width=0.2, colorup='k', colordown='r',
 
         vline = Line2D(
             xdata=(t, t), ydata=(low, high),
-            color=color,
+            color='k',
             linewidth=0.5,
             antialiased=True,
+            zorder=0
         )
 
         rect = Rectangle(
@@ -1018,13 +1019,15 @@ def _candlestick(ax, quotes, width=0.2, colorup='k', colordown='r',
             height = height,
             facecolor = color,
             edgecolor = color,
+            zorder=1
         )
         rect.set_alpha(alpha)
 
         lines.append(vline)
         patches.append(rect)
-        ax.add_line(vline)
         ax.add_patch(rect)
+        ax.add_line(vline)
+
     ax.autoscale_view()
 
     return lines, patches

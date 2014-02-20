@@ -1,5 +1,11 @@
+import matplotlib
+matplotlib.use('QT4Agg')
+matplotlib.rcParams['backend.qt4']='PySide'
+
 import matplotlib.pyplot as plt
 import numpy as np
+
+
 
 with plt.xkcd():
     # Based on "Stove Ownership" from XKCD by Randall Monroe
