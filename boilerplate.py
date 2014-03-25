@@ -108,6 +108,7 @@ def boilerplate_gen():
         'barh',
         'broken_barh',
         'boxplot',
+        'violinplot',
         'cohere',
         'clabel',
         'contour',

@@ -6495,3 +6495,70 @@ class Axes(_AxesBase):
     def triplot(self, *args, **kwargs):
         mtri.triplot(self, *args, **kwargs)
     triplot.__doc__ = mtri.triplot.__doc__
+
+    def violinplot(self, data, positions=None, widths=None, granularity=100., **kwargs):
+        """
+        Draw a violin plot
+        
+        Draws a single violin per column of the given data matrix.
+        
+        Parameters
+        ----------
+        data : array of columns
+        
+        positions : array of indicies default = range(n)
+                Sets the positions of the violins.
+        
+        widths : positive real or array of positive reals
+                sets the width of each violin. The default is 1 for each violins.
+                Only the relative value will metter most of the time.
+                
+        """
+        def violinplot_stats(data, kdefunc, granularity=100.):
+            stats = []
+            for d in data:
+                perviolinstats = {}
+                k = kdefunc(d)
+                m = k.dataset.min() #lower bound of violin
+                M = k.dataset.max() #upper bound of violin
+                x = perviolinstats['sample_points'] = np.linspace(m,M,granularity)
+                perviolinstats['density_curve'] = k.evaluate(x) #violin profile
+                stats.append(perviolinstats)
+            return stats
+
+        try:
+            from scipy.stats import gaussian_kde
+        except ImportError as e:
+            print("You don't have scipy.")
+            return
+            
+        numplots = len(data)
+        
+        if positions is None:
+            positions = range(numplots)
+        elif len(positions) != numplots:
+            raise ValueError("Length of specified positions vector doesn't match data.")
+        elif sorted(positions) != range(numplots):
+            raise ValueError("Specified positions are invalid. Only use positions in range(0,n).")
+
+        if widths is None:
+            widths = [1]*numplots
+        elif np.isscalar(widths):
+            widths = [widths]*numplots
+        elif len(widths) != numplots:
+            raise ValueError("Length of specified widths vector doesn't match data.")
+       
+        widths = np.array(widths, dtype='float32')
+        
+
+        #Calculate statistics about violins
+        vpstats = violinplot_stats(data, gaussian_kde, granularity)
+        
+        #Calculate midpoints of violins
+        midpoints = np.cumsum(np.concatenate(([0],widths[:-1]))) + widths/2
+
+        for p,vp in zip(positions,vpstats):
+            v = vp['density_curve']
+            v = (v/max(v))*(widths[p]/2) #normalize v to size 1 and multiply by width/2
+            self.fill_betweenx(vp['sample_points'],midpoints[p],midpoints[p]+v, **kwargs)
+            self.fill_betweenx(vp['sample_points'],midpoints[p],midpoints[p]-v, **kwargs)
