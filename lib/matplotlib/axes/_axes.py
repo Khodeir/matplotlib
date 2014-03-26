@@ -6553,12 +6553,9 @@ class Axes(_AxesBase):
 
         #Calculate statistics about violins
         vpstats = violinplot_stats(data, gaussian_kde, granularity)
-        
-        #Calculate midpoints of violins
-        midpoints = np.cumsum(np.concatenate(([0],widths[:-1]))) + widths/2
 
         for p,vp in zip(positions,vpstats):
             v = vp['density_curve']
             v = (v/max(v))*(widths[p]/2) #normalize v to size 1 and multiply by width/2
-            self.fill_betweenx(vp['sample_points'],midpoints[p],midpoints[p]+v, **kwargs)
-            self.fill_betweenx(vp['sample_points'],midpoints[p],midpoints[p]-v, **kwargs)
+            self.fill_betweenx(vp['sample_points'],p,p+v, **kwargs)
+            self.fill_betweenx(vp['sample_points'],p,p-v, **kwargs)
