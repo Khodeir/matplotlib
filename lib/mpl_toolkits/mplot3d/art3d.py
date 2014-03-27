@@ -344,7 +344,6 @@ class Collection3D(object):
         self.set_facecolors(zalpha(self._facecolor3d, vzs))
         self.set_edgecolors(zalpha(self._edgecolor3d, vzs))
         super(self.__class__, self).set_offsets(list(zip(vxs, vys)))
-        #PatchCollection.set_offsets(self, list(zip(vxs, vys)))
 
         if vzs.size > 0 :
             return min(vzs)
@@ -354,11 +353,14 @@ class Collection3D(object):
     def draw(self, renderer):
         self._old_draw(renderer)
 
+
 class Patch3DCollection(Collection3D, PatchCollection):
     pass
 
+
 class Path3DCollection(Collection3D, PathCollection):
     pass
+
 
 def patch_collection_2d_to_3d(col, zs=0, zdir='z'):
     """Convert a PatchCollection to a Patch3DCollection object."""
