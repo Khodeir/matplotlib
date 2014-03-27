@@ -6496,7 +6496,8 @@ class Axes(_AxesBase):
         mtri.triplot(self, *args, **kwargs)
     triplot.__doc__ = mtri.triplot.__doc__
 
-    def violinplot(self, data, positions=None, widths=None, granularity=100., **kwargs):
+    def violinplot(self, data, positions=None, widths=None, granularity=100.,
+                    **kwargs):
         """
         Draw a violin plot
         
@@ -6505,23 +6506,40 @@ class Axes(_AxesBase):
         Parameters
         ----------
         data : array of columns
+                input data to plot
         
         positions : array of indicies default = range(n)
                 Sets the positions of the violins.
         
-        widths : positive real or array of positive reals
-                sets the width of each violin. The default is 1 for each violins.
-                Only the relative value will metter most of the time.
+        widths : scaler, default: 0.75
+                sets the width of each violin. The default is 0.5, or 
+                `0.15*(distance between extreme positions)` if that is smaller.
+
+        Other parameters - kwargs
+
+        vert: boolean, default: true
+                specifying orientation of violins, false for horizontal violins
+
+        covariance_factor: 0 arity lambda function returning a scaler or
+                             silvermans_factor function (numpy's gaussian_kde),
+                             default: scotts_factor from numpy's gaussian_kde
+                multiplies the data covariance matrix to obtain the kernel
+                covariance matrix
+        ----------------
                 
         """
-        def violinplot_stats(data, kdefunc, granularity=100.):
+        def violinplot_stats(data, kdefunc, covariance_factor, 
+                                granularity=100.):
             stats = []
             for d in data:
                 perviolinstats = {}
                 k = kdefunc(d)
+                #kdefunc sets the default covariance_factor to scotts factor
+                if covariance_factor: k.covariance_factor = covariance_factor
                 m = k.dataset.min() #lower bound of violin
                 M = k.dataset.max() #upper bound of violin
-                x = perviolinstats['sample_points'] = np.linspace(m,M,granularity)
+                x = perviolinstats['sample_points'] = np.linspace(m, M, 
+                                                                    granularity)
                 perviolinstats['density_curve'] = k.evaluate(x) #violin profile
                 stats.append(perviolinstats)
             return stats
@@ -6533,29 +6551,48 @@ class Axes(_AxesBase):
             return
             
         numplots = len(data)
-        
+        vert = kwargs.pop("vert", True)
+
         if positions is None:
             positions = range(numplots)
         elif len(positions) != numplots:
-            raise ValueError("Length of specified positions vector doesn't match data.")
+            raise ValueError("Length of specified positions vector doesn't \
+                              match data.")
         elif sorted(positions) != range(numplots):
-            raise ValueError("Specified positions are invalid. Only use positions in range(0,n).")
+            raise ValueError("Specified positions are invalid. Only use \
+                              positions in range(0,n).")
 
-        if widths is None:
-            widths = [1]*numplots
+        if widths is None or not np.isscalar(widths):
+            widths = [0.75]*numplots
         elif np.isscalar(widths):
             widths = [widths]*numplots
-        elif len(widths) != numplots:
-            raise ValueError("Length of specified widths vector doesn't match data.")
-       
         widths = np.array(widths, dtype='float32')
         
 
         #Calculate statistics about violins
-        vpstats = violinplot_stats(data, gaussian_kde, granularity)
+        covariance_factor = kwargs.pop("covariance_factor", None)
+        vpstats = violinplot_stats(data, gaussian_kde, covariance_factor,
+                                    granularity)
 
         for p,vp in zip(positions,vpstats):
             v = vp['density_curve']
-            v = (v/max(v))*(widths[p]/2) #normalize v to size 1 and multiply by width/2
-            self.fill_betweenx(vp['sample_points'],p,p+v, **kwargs)
-            self.fill_betweenx(vp['sample_points'],p,p-v, **kwargs)
+            #normalize v to size 1 and multiply by width/2
+            v = (v/max(v))*(widths[p]/2) 
+            #remaining kwargs after popping are sent to fill_between
+            if vert:
+                self.fill_betweenx(vp['sample_points'],p+1,p+1+v, **kwargs)
+                self.fill_betweenx(vp['sample_points'],p+1,p+1-v, **kwargs)
+            else:
+                self.fill_between(vp['sample_points'],p+1,p+1+v, **kwargs)
+                self.fill_between(vp['sample_points'],p+1,p+1-v, **kwargs)
+
+        # the tick labels for each violin are set
+        # set lim to even placement to center
+        violing_labels = positions + [numplots]
+        if vert:
+            self.set_xlim(numplots + 1)
+            self.set_xticks(violing_labels)
+        else:
+            self.set_ylim(numplots + 1)
+            self.set_yticks(violing_labels)
+
