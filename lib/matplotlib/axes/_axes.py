@@ -6797,6 +6797,10 @@ class Axes(_AxesBase):
         numplots = len(data)
         vert = kwargs.pop("vert", True)
 
+	# Extract title and labels for the violin plots.
+	title = kwargs.pop("title", None) 
+	violin_labels = kwargs.pop("plot_labels", None)
+
         if positions is None:
             positions = range(numplots)
         elif len(positions) != numplots:
@@ -6839,4 +6843,10 @@ class Axes(_AxesBase):
         else:
             self.set_ylim(numplots + 1)
             self.set_yticks(violing_labels)
+
+	# Set the title and labels for each violin plot.
+        self.set_title(title)
+	# Must prepend a 0 to the labels.
+	violin_labels.insert(0, "")
+	self.set_yticklabels(violin_labels)
 
