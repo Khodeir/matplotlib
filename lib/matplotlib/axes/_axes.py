@@ -6744,19 +6744,19 @@ class Axes(_AxesBase):
                     **kwargs):
         """
         Draw a violin plot
-        
+
         Draws a single violin per column of the given data matrix.
-        
+
         Parameters
         ----------
         data : array of columns
                 input data to plot
-        
+
         positions : array of indicies default = range(n)
                 Sets the positions of the violins.
-        
+
         widths : scaler, default: 0.75
-                sets the width of each violin. The default is 0.5, or 
+                sets the width of each violin. The default is 0.5, or
                 `0.15*(distance between extreme positions)` if that is smaller.
 
         Other parameters - kwargs
@@ -6770,9 +6770,9 @@ class Axes(_AxesBase):
                 multiplies the data covariance matrix to obtain the kernel
                 covariance matrix
         ----------------
-                
+
         """
-        def violinplot_stats(data, kdefunc, covariance_factor, 
+        def violinplot_stats(data, kdefunc, covariance_factor,
                                 granularity=100.):
             stats = []
             for d in data:
@@ -6782,7 +6782,7 @@ class Axes(_AxesBase):
                 if covariance_factor: k.covariance_factor = covariance_factor
                 m = k.dataset.min() #lower bound of violin
                 M = k.dataset.max() #upper bound of violin
-                x = perviolinstats['sample_points'] = np.linspace(m, M, 
+                x = perviolinstats['sample_points'] = np.linspace(m, M,
                                                                     granularity)
                 perviolinstats['density_curve'] = k.evaluate(x) #violin profile
                 stats.append(perviolinstats)
@@ -6793,13 +6793,13 @@ class Axes(_AxesBase):
         except ImportError as e:
             print("You don't have scipy.")
             return
-            
+
         numplots = len(data)
         vert = kwargs.pop("vert", True)
 
-	# Extract title and labels for the violin plots.
-	title = kwargs.pop("title", None) 
-	violin_labels = kwargs.pop("plot_labels", None)
+      	# Extract title and labels for the violin plots.
+      	title = kwargs.pop("title", None)
+      	violin_labels = kwargs.pop("plot_labels", None)
 
         if positions is None:
             positions = range(numplots)
@@ -6815,7 +6815,7 @@ class Axes(_AxesBase):
         elif np.isscalar(widths):
             widths = [widths]*numplots
         widths = np.array(widths, dtype='float32')
-        
+
 
         #Calculate statistics about violins
         covariance_factor = kwargs.pop("covariance_factor", None)
@@ -6825,7 +6825,7 @@ class Axes(_AxesBase):
         for p,vp in zip(positions,vpstats):
             v = vp['density_curve']
             #normalize v to size 1 and multiply by width/2
-            v = (v/max(v))*(widths[p]/2) 
+            v = (v/max(v))*(widths[p]/2)
             #remaining kwargs after popping are sent to fill_between
             if vert:
                 self.fill_betweenx(vp['sample_points'],p+1,p+1+v, **kwargs)
@@ -6844,9 +6844,8 @@ class Axes(_AxesBase):
             self.set_ylim(numplots + 1)
             self.set_yticks(violing_labels)
 
-	# Set the title and labels for each violin plot.
+        # Set the title and labels for each violin plot.
         self.set_title(title)
-	# Must prepend a 0 to the labels.
-	violin_labels.insert(0, "")
-	self.set_yticklabels(violin_labels)
-
+        # Must prepend a 0 to the labels.
+        # violin_labels.insert(0, "")
+        # self.set_yticklabels(violin_labels)
