@@ -6834,19 +6834,22 @@ class Axes(_AxesBase):
                 self.fill_between(vp['sample_points'],p+1,p+1+v, **kwargs)
                 self.fill_between(vp['sample_points'],p+1,p+1-v, **kwargs)
 
-        # the tick labels for each violin are set
-        # set lim to even placement to center
-        violing_labels = positions + [numplots]
-        if vert:
-            self.set_xlim(numplots + 1)
-            self.set_xticks(violing_labels)
-        else:
-            self.set_ylim(numplots + 1)
-            self.set_yticks(violing_labels)
 
         # Set the title and labels for each violin plot.
         self.set_title(title)
-        # Must prepend a 0 to the labels.
-	if (violin_labels):
-	    violin_labels.insert(0,	"") 
-	    self.set_yticklabels(violin_labels)
+        # # Must prepend a 0 to the labels.
+        if (violin_labels):
+            violin_labels.insert(0, "") 
+            violin_labels.insert(numplots + 1, "") 
+            if vert:
+                self.set_xticklabels(violin_labels)
+            else:
+                self.set_yticklabels(violin_labels)
+        else:
+            int_violin_labels = range(numplots + 1) + [""]
+            if vert:
+                self.set_xlim(0, numplots + 1)
+                self.set_xticklabels(int_violin_labels)
+            else:
+                self.set_ylim(0, numplots + 1)
+                self.set_yticklabels(int_violin_labels)
