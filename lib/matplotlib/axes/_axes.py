@@ -6895,7 +6895,7 @@ class Axes(_AxesBase):
         for p,vp, in zip(positions,vpstats):
             # setting color into kwargs for fill_between
             if color: kwargs['color'] = color[p-1]
-            if edgecolor: kwargs['edgecolor'] = edgecolor[p-1]
+            kwargs['edgecolor'] = 'none';
 
             stats = bxpstats[p-1]
             
