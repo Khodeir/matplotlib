@@ -6809,8 +6809,9 @@ class Axes(_AxesBase):
       	# Extract title, labels and colors for the violin plots.
       	title = kwargs.pop("title", None)
       	violin_labels = kwargs.pop("plot_labels", None)
-        color = kwargs.pop("color", None)
-        facecolor = kwargs.pop("facecolor", None)
+        color = kwargs.pop("facecolor", None)
+        if color is None:
+            color = kwargs.pop("color", None)
         edgecolor = kwargs.pop("edgecolor", None)
 
 
@@ -6830,34 +6831,30 @@ class Axes(_AxesBase):
         widths = np.array(widths, dtype='float32')
 
         # checking and setting default color options
-        if color is None:
-            color = list(mcolors.colorConverter.to_rgba_array(color)) * numplots
-        else:
-            color = list(mcolors.colorConverter.to_rgba_array(color))
-            if len(color) == 0:  # until to_rgba_array is changed
-                color = [[0, 0, 0, 0]]
-            if len(color) < numplots:
-                color *= numplots
-
-        # checking and setting default facecolor options
-        if facecolor is None:
-            facecolor = list(mcolors.colorConverter.to_rgba_array(facecolor)) * numplots
-        else:
-            facecolor = list(mcolors.colorConverter.to_rgba_array(facecolor))
-            if len(facecolor) == 0:  # until to_rgba_array is changed
-                color = [[0, 0, 0, 0]]
-            if len(facecolor) < numplots:
-                facecolor *= numplots
+        try:
+            if color is None:
+                color = list(mcolors.colorConverter.to_rgba_array('b')) * numplots
+            else:
+                color = list(mcolors.colorConverter.to_rgba_array(color))
+                if len(color) == 0:  # until to_rgba_array is changed
+                    color = [[0, 0, 0, 0]]
+                if len(color) < numplots:
+                    color *= numplots
+        except:
+            raise ValueError("The color provided is not supported")
 
         # checking and setting default edgecolor options
-        if edgecolor is None:
-            edgecolor = list(mcolors.colorConverter.to_rgba_array(edgecolor)) * numplots
-        else:
-            edgecolor = list(mcolors.colorConverter.to_rgba_array(edgecolor))
-            if len(edgecolor) == 0:  # until to_rgba_array is changed
-                color = [[0, 0, 0, 0]]
-            if len(edgecolor) < numplots:
-                edgecolor *= numplots
+        try:
+            if edgecolor is None:
+                edgecolor = list(mcolors.colorConverter.to_rgba_array('k')) * numplots
+            else:
+                edgecolor = list(mcolors.colorConverter.to_rgba_array(edgecolor))
+                if len(edgecolor) == 0:  # until to_rgba_array is changed
+                    color = [[0, 0, 0, 0]]
+                if len(edgecolor) < numplots:
+                    edgecolor *= numplots
+        except:
+            raise ValueError("The color provided is not supported")
 
 
         #Calculate statistics about violins
@@ -6865,10 +6862,9 @@ class Axes(_AxesBase):
         vpstats = violinplot_stats(data, gaussian_kde, covariance_factor,
                                     granularity)
 
-        for p,vp,c,f,e in zip(positions,vpstats,color,facecolor,edgecolor):
+        for p,vp,c,e in zip(positions,vpstats,color,edgecolor):
             # setting color into kwargs for fill_between
             kwargs['color']=c
-            kwargs['facecolor']=f
             kwargs['edgecolor']=e
             v = vp['density_curve']
             #normalize v to size 1 and multiply by width/2
@@ -6894,6 +6890,6 @@ class Axes(_AxesBase):
         # Set the title and labels for each violin plot.
         self.set_title(title)
         # Must prepend a 0 to the labels.
-	if (violin_labels):
-	    violin_labels.insert(0,	"")
-	    self.set_yticklabels(violin_labels)
+      	if (violin_labels):
+      	    violin_labels.insert(0,	"")
+      	    self.set_yticklabels(violin_labels)
