@@ -33,7 +33,7 @@ import matplotlib.stackplot as mstack
 import matplotlib.streamplot as mstream
 import matplotlib.table as mtable
 import matplotlib.text as mtext
-import matplotlib.ticker as mticker
+import matplotlib.ticker as mticker 
 import matplotlib.transforms as mtransforms
 import matplotlib.tri as mtri
 from matplotlib.container import BarContainer, ErrorbarContainer, StemContainer
@@ -6813,6 +6813,10 @@ class Axes(_AxesBase):
       	# Extract title, labels and colors for the violin plots.
       	title = kwargs.pop("title", None)
       	violin_labels = kwargs.pop("plot_labels", None)
+
+        if (violin_labels) and (type(violin_labels) is not list):
+            raise ValueError("Invalid labels")
+
         color = kwargs.pop("facecolor", None)
         if color is None:
             color = kwargs.pop("color", None)
@@ -6915,7 +6919,14 @@ class Axes(_AxesBase):
         # Set the title and labels for each violin plot.
         if title:
             self.set_title(title)
-        # # Must prepend a 0 to the labels.
+
+        # Set the number of ticks equal to the number of violins.
+        if vert:
+            self.set_xticks(range(numplots+1))
+        else:
+            self.set_yticks(range(numplots+1))
+
+        # Must prepend a 0 to the labels.
         if (violin_labels):
             violin_labels.insert(0, "")
             violin_labels.insert(numplots + 1, "")
@@ -6923,11 +6934,4 @@ class Axes(_AxesBase):
                 self.set_xticklabels(violin_labels)
             else:
                 self.set_yticklabels(violin_labels)
-        else:
-            int_violin_labels = range(numplots + 1) + [""]
-            if vert:
-                self.set_xlim(0, numplots + 1)
-                self.set_xticklabels(int_violin_labels)
-            else:
-                self.set_ylim(0, numplots + 1)
-                self.set_yticklabels(int_violin_labels)
+
