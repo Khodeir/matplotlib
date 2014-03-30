@@ -6775,6 +6775,7 @@ class Axes(_AxesBase):
 
         facecolor : scalar or array-like, optional
             the colors of the violinplot face
+            facecolor has priority over color
 
         edgecolor : scalar or array-like, optional
             the colors of the violinplot edges
