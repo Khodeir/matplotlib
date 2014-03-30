@@ -6782,6 +6782,9 @@ class Axes(_AxesBase):
         ----------------
 
         """
+        def doplot(*args, **kwargs):
+                return self.plot(*args, **kwargs)
+
         def violinplot_stats(data, kdefunc, covariance_factor,
                                 granularity=100.):
             stats = []
@@ -6885,10 +6888,18 @@ class Axes(_AxesBase):
         vpstats = violinplot_stats(data, gaussian_kde, covariance_factor,
                                     granularity)
 
+        #quartiles and median line.
+        bxpstats = cbook.boxplot_stats(data)
+        final_medianprops = dict(linestyle='--', color='black')
+
         for p,vp, in zip(positions,vpstats):
             # setting color into kwargs for fill_between
             if color: kwargs['color'] = color[p]
             if edgecolor: kwargs['edgecolor'] = edgecolor[p]
+            stats = bxpstats[p]
+            med_y = stats['med']
+            doplot(p, med_y, **final_medianprops)
+
             v = vp['density_curve']
             #normalize v to size 1 and multiply by width/2
             v = (v/max(v))*(widths[p]/2)
@@ -6902,7 +6913,8 @@ class Axes(_AxesBase):
 
 
         # Set the title and labels for each violin plot.
-        self.set_title(title)
+        if title:
+            self.set_title(title)
         # # Must prepend a 0 to the labels.
         if (violin_labels):
             violin_labels.insert(0, "")
