@@ -6820,25 +6820,25 @@ class Axes(_AxesBase):
             widths = [widths]*numplots
         widths = np.array(widths, dtype='float32')
 
+        # checking and setting default color options
+        if color is None:
+            color = [None] * numplots
+        else:
+            color = list(mcolors.colorConverter.to_rgba_array(color))
+            if len(color) == 0:  # until to_rgba_array is changed
+                color = [[0, 0, 0, 0]]
+            if len(color) < numplots:
+                color *= numplots
+
 
         #Calculate statistics about violins
         covariance_factor = kwargs.pop("covariance_factor", None)
         vpstats = violinplot_stats(data, gaussian_kde, covariance_factor,
                                     granularity)
 
-        # checking and setting default color options
-        # if color is None:
-        #     color = [None] * numplots
-        # else:
-        #     color = list(mcolors.colorConverter.to_rgba_array(color))
-        #     if len(color) == 0:  # until to_rgba_array is changed
-        #         color = [[0, 0, 0, 0]]
-        #     if len(color) < numplots:
-        #         color *= numplots
-
-        # kwargs c in zip(color)
-
-        for p,vp in zip(positions,vpstats):
+        for p,vp,c in zip(positions,vpstats,color):
+            # setting color into kwargs for fill_between
+            kwargs['color']=c
             v = vp['density_curve']
             #normalize v to size 1 and multiply by width/2
             v = (v/max(v))*(widths[p]/2)
@@ -6864,5 +6864,5 @@ class Axes(_AxesBase):
         self.set_title(title)
         # Must prepend a 0 to the labels.
 	if (violin_labels):
-	    violin_labels.insert(0,	"") 
+	    violin_labels.insert(0,	"")
 	    self.set_yticklabels(violin_labels)
