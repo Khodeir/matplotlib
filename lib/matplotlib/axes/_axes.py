@@ -6813,7 +6813,7 @@ class Axes(_AxesBase):
         if color is None:
             color = kwargs.pop("color", None)
         edgecolor = kwargs.pop("edgecolor", None)
-
+        quartile = kwargs.pop("quartile", None)
 
         if positions is None:
             positions = range(numplots)
@@ -6856,16 +6856,38 @@ class Axes(_AxesBase):
         except:
             raise ValueError("The color provided is not supported")
 
+        ################# QUARTILE COLORING PLAN ###################
+        # ** figure out how to get specific values from boxplot **
+        # ** use the getp()?                                    **
+        #
+        #  - for each violin
+        #    - get boxplot edges and median
+        #    - store data in "where" array
+        #    - apply "where" array to the fill_between below
+        #      such that we split it into 4 sections and pass in different
+        #      values for each section
+
+        #quartile color handling
+        if quartile is None:
+            pass
+        elif quartile is not True and not False:
+            raise ValueError("Quartile input expects either True or False")
+        else:
+            # get box quartile values and median to know where to divide the data
+            quart_boxplot = boxplot(data)
+            boxes = getp(quart_boxplot, boxes)
+            median = getp(quart_boxplot, median)
+
 
         #Calculate statistics about violins
         covariance_factor = kwargs.pop("covariance_factor", None)
         vpstats = violinplot_stats(data, gaussian_kde, covariance_factor,
                                     granularity)
 
-        for p,vp,c,e in zip(positions,vpstats,color,edgecolor):
+        for p,vp, in zip(positions,vpstats):
             # setting color into kwargs for fill_between
-            kwargs['color']=c
-            kwargs['edgecolor']=e
+            if color: kwargs['color'] = color[p]
+            if edgecolor: kwargs['edgecolor'] = edgecolor[p]
             v = vp['density_curve']
             #normalize v to size 1 and multiply by width/2
             v = (v/max(v))*(widths[p]/2)
