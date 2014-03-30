@@ -6824,7 +6824,7 @@ class Axes(_AxesBase):
         quartile = kwargs.pop("quartile", None)
 
         if positions is None:
-            positions = range(numplots)
+            positions = list(xrange(1, numplots + 1))
         elif len(positions) != numplots:
             raise ValueError("Length of specified positions vector doesn't \
                               match data.")
@@ -6894,26 +6894,63 @@ class Axes(_AxesBase):
 
         #quartiles and median line.
         bxpstats = cbook.boxplot_stats(data)
-        final_medianprops = dict(linestyle='--', color='black')
 
+
+        #check if the violins are to be split in half
+        split = kwargs.pop('split', None)
+        flip = False
         for p,vp, in zip(positions,vpstats):
             # setting color into kwargs for fill_between
-            if color: kwargs['color'] = color[p]
-            if edgecolor: kwargs['edgecolor'] = edgecolor[p]
-            stats = bxpstats[p]
-            med_y = stats['med']
-            # doplot(p, med_y, **final_medianprops)
+            if color: kwargs['color'] = color[p-1]
+            kwargs['edgecolor'] = 'none';
+
+            stats = bxpstats[p-1]
 
             v = vp['density_curve']
             #normalize v to size 1 and multiply by width/2
-            v = (v/max(v))*(widths[p]/2)
+            v = (v/max(v))*(widths[p-1]/2)
             #remaining kwargs after popping are sent to fill_between
-            if vert:
-                self.fill_betweenx(vp['sample_points'],p+1,p+1+v, **kwargs)
-                self.fill_betweenx(vp['sample_points'],p+1,p+1-v, **kwargs)
+
+            #Split half which alternatively flip
+            if split:
+              final_medianprops = dict(linestyle='solid', color='black')
+              if vert:
+                med_y = [stats['med'], stats['med']]
+                if flip:
+                  #Right half
+                  med_x = [p, p+(max(v)*0.80)]
+                  self.fill_betweenx(vp['sample_points'],p,p+v, **kwargs)
+                else:
+                  #Left half
+                  med_x = [p, p-(max(v)*0.80)]
+                  self.fill_betweenx(vp['sample_points'],p,p-v, **kwargs)
+                flip = not flip
+              else:
+                med_x = [stats['med'], stats['med']]
+                if flip:
+                  #Top half
+                  med_y = [p, p+(max(v)*0.80)]
+                  self.fill_between(vp['sample_points'],p,p+v, **kwargs)
+                else:
+                  #Bottom half
+                  med_y = [p, p-(max(v)*0.80)]
+                  self.fill_between(vp['sample_points'],p,p-v, **kwargs)
+                flip = not flip
+            #Whole violins
             else:
-                self.fill_between(vp['sample_points'],p+1,p+1+v, **kwargs)
-                self.fill_between(vp['sample_points'],p+1,p+1-v, **kwargs)
+              final_medianprops = dict(linestyle='solid', marker='o',
+                                        color='black')
+              if vert:
+                  med_y = [stats['med']]
+                  med_x = [p]
+                  self.fill_betweenx(vp['sample_points'],p,p+v, **kwargs)
+                  self.fill_betweenx(vp['sample_points'],p,p-v, **kwargs)
+              else:
+                  med_x = [stats['med']]
+                  med_y = [p]
+                  self.fill_between(vp['sample_points'],p,p+v, **kwargs)
+                  self.fill_between(vp['sample_points'],p,p-v, **kwargs)
+            doplot(med_x, med_y, **final_medianprops)
 
 
         # Set the title and labels for each violin plot.
