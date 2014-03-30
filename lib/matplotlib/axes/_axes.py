@@ -33,7 +33,7 @@ import matplotlib.stackplot as mstack
 import matplotlib.streamplot as mstream
 import matplotlib.table as mtable
 import matplotlib.text as mtext
-import matplotlib.ticker as mticker 
+import matplotlib.ticker as mticker
 import matplotlib.transforms as mtransforms
 import matplotlib.tri as mtri
 from matplotlib.container import BarContainer, ErrorbarContainer, StemContainer
@@ -6899,6 +6899,8 @@ class Axes(_AxesBase):
         #check if the violins are to be split in half
         split = kwargs.pop('split', None)
         flip = False
+        previousp = 0;
+
         for p,vp, in zip(positions,vpstats):
             # setting color into kwargs for fill_between
             if color: kwargs['color'] = color[p-1]
@@ -6918,10 +6920,12 @@ class Axes(_AxesBase):
                 med_y = [stats['med'], stats['med']]
                 if flip:
                   #Right half
-                  med_x = [p, p+(max(v)*0.80)]
-                  self.fill_betweenx(vp['sample_points'],p,p+v, **kwargs)
+                  med_x = [previousp, previousp+(max(v)*0.80)]
+                  self.fill_betweenx(vp['sample_points'],previousp,previousp+v,
+                                      **kwargs)
                 else:
                   #Left half
+                  previousp = p
                   med_x = [p, p-(max(v)*0.80)]
                   self.fill_betweenx(vp['sample_points'],p,p-v, **kwargs)
                 flip = not flip
@@ -6929,10 +6933,12 @@ class Axes(_AxesBase):
                 med_x = [stats['med'], stats['med']]
                 if flip:
                   #Top half
-                  med_y = [p, p+(max(v)*0.80)]
-                  self.fill_between(vp['sample_points'],p,p+v, **kwargs)
+                  med_y = [previousp, previousp+(max(v)*0.80)]
+                  self.fill_between(vp['sample_points'],previousp , previousp+v,
+                                      **kwargs)
                 else:
                   #Bottom half
+                  previousp = p
                   med_y = [p, p-(max(v)*0.80)]
                   self.fill_between(vp['sample_points'],p,p-v, **kwargs)
                 flip = not flip
@@ -6971,4 +6977,3 @@ class Axes(_AxesBase):
                 self.set_xticklabels(violin_labels)
             else:
                 self.set_yticklabels(violin_labels)
-
