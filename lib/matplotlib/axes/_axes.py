@@ -6811,6 +6811,10 @@ class Axes(_AxesBase):
       	# Extract title, labels and colors for the violin plots.
       	title = kwargs.pop("title", None)
       	violin_labels = kwargs.pop("plot_labels", None)
+
+        if (violin_labels) and (type(violin_labels) is not list):
+            raise ValueError("Invalid labels")
+
         color = kwargs.pop("facecolor", None)
         if color is None:
             color = kwargs.pop("color", None)
@@ -6938,7 +6942,10 @@ class Axes(_AxesBase):
         final_medianprops = dict(linestyle='solid', marker='o', 
             color='white', markersize=15*widths)
         final_whiskerprops = dict(linestyle='solid', color='black', linewidth=1)
-
+        #check if the violins are to be split in half
+        split = kwargs.pop('split', None)
+        flip = False
+        previousp = 0;
 
         for p,vp, in zip(positions,vpstats):
             stats = bxpstats[p-1]
@@ -6960,31 +6967,72 @@ class Axes(_AxesBase):
             # setting color into kwargs for fill_between
             if color: kwargs['color'] = color[p-1]
             kwargs['edgecolor'] = 'none';
-
-            
-            
             v = vp['density_curve']
             #normalize v to size 1 and multiply by width/2
             v = (v/max(v))*(widths[p-1]/2)
             #remaining kwargs after popping are sent to fill_between
-            if vert:
-                self.fill_betweenx(vp['sample_points'], p, p+v, **kwargs)
-                self.fill_betweenx(vp['sample_points'], p, p-v, **kwargs)
+
+            #Split half which alternatively flip
+            if split:
+              final_medianprops = dict(linestyle='solid', color='black')
+              if vert:
+                med_y = [stats['med'], stats['med']]
+                if flip:
+                  #Right half
+                  med_x = [previousp, previousp+(max(v)*0.80)]
+                  self.fill_betweenx(vp['sample_points'],previousp,previousp+v,
+                                      **kwargs)
+                else:
+                  #Left half
+                  previousp = p
+                  med_x = [p, p-(max(v)*0.80)]
+                  self.fill_betweenx(vp['sample_points'],p,p-v, **kwargs)
+                flip = not flip
+              else:
+                med_x = [stats['med'], stats['med']]
+                if flip:
+                  #Top half
+                  med_y = [previousp, previousp+(max(v)*0.80)]
+                  self.fill_between(vp['sample_points'],previousp , previousp+v,
+                                      **kwargs)
+                else:
+                  #Bottom half
+                  previousp = p
+                  med_y = [p, p-(max(v)*0.80)]
+                  self.fill_between(vp['sample_points'],p,p-v, **kwargs)
+                flip = not flip
+            #Whole violins
             else:
-                self.fill_between(vp['sample_points'], p, p+v, **kwargs)
-                self.fill_between(vp['sample_points'], p, p-v, **kwargs)
-            
+              final_medianprops = dict(linestyle='solid', marker='o',
+                                        color='black')
+              if vert:
+                  med_y = [stats['med']]
+                  med_x = [p]
+                  self.fill_betweenx(vp['sample_points'],p,p+v, **kwargs)
+                  self.fill_betweenx(vp['sample_points'],p,p-v, **kwargs)
+              else:
+                  med_x = [stats['med']]
+                  med_y = [p]
+                  self.fill_between(vp['sample_points'],p,p+v, **kwargs)
+                  self.fill_between(vp['sample_points'],p,p-v, **kwargs)
+
             #dopatch(box_x, box_y, **final_boxprops)
             doplot(med_x, med_y, **final_medianprops)
             #doplot(whisker_x, whiskerlo_y, **final_whiskerprops)
             #doplot(whisker_x, whiskerhi_y, **final_whiskerprops)
 
 
-
         # Set the title and labels for each violin plot.
         if title:
             self.set_title(title)
-        # # Must prepend a 0 to the labels.
+
+        # Set the number of ticks equal to the number of violins.
+        if vert:
+            self.set_xticks(range(numplots+1))
+        else:
+            self.set_yticks(range(numplots+1))
+
+        # Must prepend a 0 to the labels.
         if (violin_labels):
             violin_labels.insert(0, "")
             violin_labels.insert(numplots + 1, "")
@@ -6992,11 +7040,3 @@ class Axes(_AxesBase):
                 self.set_xticklabels(violin_labels)
             else:
                 self.set_yticklabels(violin_labels)
-        else:
-            int_violin_labels = range(numplots + 1) + [""]
-            if vert:
-                self.set_xlim(0, numplots + 1)
-                self.set_xticklabels(int_violin_labels)
-            else:
-                self.set_ylim(0, numplots + 1)
-                self.set_yticklabels(int_violin_labels)
