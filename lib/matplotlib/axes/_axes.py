@@ -6847,5 +6847,6 @@ class Axes(_AxesBase):
         # Set the title and labels for each violin plot.
         self.set_title(title)
         # Must prepend a 0 to the labels.
-        # violin_labels.insert(0, "")
-        # self.set_yticklabels(violin_labels)
+	if (violin_labels):
+	    violin_labels.insert(0,	"") 
+	    self.set_yticklabels(violin_labels)
