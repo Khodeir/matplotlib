@@ -6769,6 +6769,15 @@ class Axes(_AxesBase):
                              default: scotts_factor from numpy's gaussian_kde
                 multiplies the data covariance matrix to obtain the kernel
                 covariance matrix
+
+        color : scalar or array-like, optional
+                the colors of the violinplots
+
+        facecolor : scalar or array-like, optional
+            the colors of the violinplot face
+
+        edgecolor : scalar or array-like, optional
+            the colors of the violinplot edges
         ----------------
 
         """
@@ -6797,9 +6806,13 @@ class Axes(_AxesBase):
         numplots = len(data)
         vert = kwargs.pop("vert", True)
 
-      	# Extract title and labels for the violin plots.
+      	# Extract title, labels and colors for the violin plots.
       	title = kwargs.pop("title", None)
       	violin_labels = kwargs.pop("plot_labels", None)
+        color = kwargs.pop("color", None)
+        facecolor = kwargs.pop("facecolor", None)
+        edgecolor = kwargs.pop("edgecolor", None)
+
 
         if positions is None:
             positions = range(numplots)
@@ -6816,13 +6829,47 @@ class Axes(_AxesBase):
             widths = [widths]*numplots
         widths = np.array(widths, dtype='float32')
 
+        # checking and setting default color options
+        if color is None:
+            color = list(mcolors.colorConverter.to_rgba_array(color)) * numplots
+        else:
+            color = list(mcolors.colorConverter.to_rgba_array(color))
+            if len(color) == 0:  # until to_rgba_array is changed
+                color = [[0, 0, 0, 0]]
+            if len(color) < numplots:
+                color *= numplots
+
+        # checking and setting default facecolor options
+        if facecolor is None:
+            facecolor = list(mcolors.colorConverter.to_rgba_array(facecolor)) * numplots
+        else:
+            facecolor = list(mcolors.colorConverter.to_rgba_array(facecolor))
+            if len(facecolor) == 0:  # until to_rgba_array is changed
+                color = [[0, 0, 0, 0]]
+            if len(facecolor) < numplots:
+                facecolor *= numplots
+
+        # checking and setting default edgecolor options
+        if edgecolor is None:
+            edgecolor = list(mcolors.colorConverter.to_rgba_array(edgecolor)) * numplots
+        else:
+            edgecolor = list(mcolors.colorConverter.to_rgba_array(edgecolor))
+            if len(edgecolor) == 0:  # until to_rgba_array is changed
+                color = [[0, 0, 0, 0]]
+            if len(edgecolor) < numplots:
+                edgecolor *= numplots
+
 
         #Calculate statistics about violins
         covariance_factor = kwargs.pop("covariance_factor", None)
         vpstats = violinplot_stats(data, gaussian_kde, covariance_factor,
                                     granularity)
 
-        for p,vp in zip(positions,vpstats):
+        for p,vp,c,f,e in zip(positions,vpstats,color,facecolor,edgecolor):
+            # setting color into kwargs for fill_between
+            kwargs['color']=c
+            kwargs['facecolor']=f
+            kwargs['edgecolor']=e
             v = vp['density_curve']
             #normalize v to size 1 and multiply by width/2
             v = (v/max(v))*(widths[p]/2)
