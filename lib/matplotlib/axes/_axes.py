@@ -6894,7 +6894,8 @@ class Axes(_AxesBase):
         for p,vp, in zip(positions,vpstats):
             # setting color into kwargs for fill_between
             if color: kwargs['color'] = color[p]
-            if edgecolor: kwargs['edgecolor'] = edgecolor[p]
+            #if edgecolor: kwargs['edgecolor'] = color[p]#edgecolor[p]
+            kwargs['edgecolor'] = 'none';
             stats = bxpstats[p]
             med_y = stats['med']
             doplot(p, med_y, **final_medianprops)
