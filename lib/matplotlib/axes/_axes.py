@@ -6898,7 +6898,7 @@ class Axes(_AxesBase):
             if edgecolor: kwargs['edgecolor'] = edgecolor[p]
             stats = bxpstats[p]
             med_y = stats['med']
-            doplot(p, med_y, **final_medianprops)
+            # doplot(p, med_y, **final_medianprops)
 
             v = vp['density_curve']
             #normalize v to size 1 and multiply by width/2
