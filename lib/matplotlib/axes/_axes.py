@@ -6782,8 +6782,6 @@ class Axes(_AxesBase):
         ----------------
 
         """
-        def doplot(*args, **kwargs):
-                return self.plot(*args, **kwargs)
 
         def violinplot_stats(data, kdefunc, covariance_factor,
                                 granularity=100.):
@@ -6864,6 +6862,52 @@ class Axes(_AxesBase):
         except:
             raise ValueError("The color provided is not supported")
 
+
+
+        #
+        # STEALING FROM BOXPLOT BEGINS
+        #
+
+        def doplot(*args, **kwargs):
+                return self.plot(*args, **kwargs)
+
+        def to_vc(xs, ys):
+            # convert arguments to verts and codes
+            verts = []
+            #codes = []
+            for xi, yi in zip(xs, ys):
+                verts.append((xi, yi))
+            verts.append((0, 0))  # ignored
+            codes = [mpath.Path.MOVETO] + \
+                    [mpath.Path.LINETO] * (len(verts) - 2) + \
+                    [mpath.Path.CLOSEPOLY]
+            return verts, codes
+
+        def patch_list(xs, ys, **kwargs):
+            verts, codes = to_vc(xs, ys)
+            path = mpath.Path(verts, codes)
+            patch = mpatches.PathPatch(path, **kwargs)
+            self.add_artist(patch)
+            return [patch]
+
+        # vertical or horizontal plot?
+        if vert:
+            def dopatch(xs, ys, **kwargs):
+                return patch_list(xs, ys, **kwargs)
+
+        else:
+            def dopatch(xs, ys, **kwargs):
+                xs, ys = ys, xs  # flip X, Y
+                return patch_list(xs, ys, **kwargs)
+
+        #
+        # STEALING FROM BOXPLOT ENDS
+        #
+
+
+
+
+
         ################# QUARTILE COLORING PLAN ###################
         # ** figure out how to get specific values from boxplot **
         # ** use the getp()?                                    **
@@ -6894,20 +6938,35 @@ class Axes(_AxesBase):
 
         #quartiles and median line.
         bxpstats = cbook.boxplot_stats(data)
-
-
+        final_boxprops = dict(edgecolor='none', facecolor='black')
+        final_medianprops = dict(linestyle='solid', marker='o', 
+            color='white', markersize=15*widths)
+        final_whiskerprops = dict(linestyle='solid', color='black', linewidth=1)
         #check if the violins are to be split in half
         split = kwargs.pop('split', None)
         flip = False
         previousp = 0;
 
         for p,vp, in zip(positions,vpstats):
+            stats = bxpstats[p-1]
+            # Whisker points
+            #whisker_x = np.ones(2) * p
+            #whiskerlo_y = np.array([stats['q1'], stats['whislo']])
+            #whiskerhi_y = np.array([stats['q3'], stats['whishi']])
+            # Box points
+            #box_left = p - widths * 0.05
+            #box_right = p + widths * 0.05
+            #box_x = [box_left, box_right, box_right, box_left, box_left]
+            #box_y = [stats['q1'], stats['q1'], stats['q3'], stats['q3'],
+            #         stats['q1']]
+            # Median point
+            med_y = [stats['med']]
+            med_x = [p]
+
+
             # setting color into kwargs for fill_between
             if color: kwargs['color'] = color[p-1]
             kwargs['edgecolor'] = 'none';
-
-            stats = bxpstats[p-1]
-
             v = vp['density_curve']
             #normalize v to size 1 and multiply by width/2
             v = (v/max(v))*(widths[p-1]/2)
@@ -6957,7 +7016,11 @@ class Axes(_AxesBase):
                   med_y = [p]
                   self.fill_between(vp['sample_points'],p,p+v, **kwargs)
                   self.fill_between(vp['sample_points'],p,p-v, **kwargs)
+
+            #dopatch(box_x, box_y, **final_boxprops)
             doplot(med_x, med_y, **final_medianprops)
+            #doplot(whisker_x, whiskerlo_y, **final_whiskerprops)
+            #doplot(whisker_x, whiskerhi_y, **final_whiskerprops)
 
 
         # Set the title and labels for each violin plot.
