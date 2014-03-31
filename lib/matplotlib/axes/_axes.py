@@ -6936,8 +6936,7 @@ class Axes(_AxesBase):
         final_whiskerprops = dict(linestyle='solid', color='black', linewidth=1)
         previousp = 0;
 
-        for p, vp, width in zip(positions,vpstats, widths):
-            stats = bxpstats[p-1]
+        for p, vp, stats, width in zip(positions,vpstats, bxpstats, widths):
             # Whisker points
             whisker_x = np.ones(2) * p
             whiskerlo_y = np.array([stats['q1'], stats['whislo']])
