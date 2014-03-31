@@ -7025,14 +7025,14 @@ class Axes(_AxesBase):
                   self.fill_between(vp['sample_points'],p,p-v, **kwargs)
 
             dopatch(box_x, box_y, **final_boxprops)
-            #doplot(box_x, box_y, **final_boxprops)
-            doplot(med_x, med_y, **final_medianprops)
+            
             if vert:
                 doplot(whisker_x, whiskerlo_y, **final_whiskerprops)
                 doplot(whisker_x, whiskerhi_y, **final_whiskerprops)
             else:
                 doplot(whiskerlo_y, whisker_x,  **final_whiskerprops)
                 doplot(whiskerhi_y, whisker_x,  **final_whiskerprops)
+            doplot(med_x, med_y, **final_medianprops)
 
 
         # Set the title and labels for each violin plot.
