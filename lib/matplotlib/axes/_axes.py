@@ -6827,9 +6827,9 @@ class Axes(_AxesBase):
         elif len(positions) != numplots:
             raise ValueError("Length of specified positions vector doesn't \
                               match data.")
-        elif sorted(positions) != range(numplots):
+        elif sorted(positions) != range(1, numplots + 1):
             raise ValueError("Specified positions are invalid. Only use \
-                              positions in range(0,n).")
+                              positions in range(1,n+1).")
 
         if widths is None or not np.isscalar(widths):
             widths = [0.75]*numplots
