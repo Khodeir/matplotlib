@@ -43,7 +43,7 @@ def test_horizontal_even_plots():
         data = [normal(size=100) for i in range(6)]
         fig=figure()
         ax2 = fig.add_subplot(111)
-        ax2.violinplot(data, widths=0.5, title='Even Split', alpha=0.5, vert=False, split=True)
+        ax2.violinplot(data, widths=0.75, title='Even Split', alpha=0.5, vert=False, split=True)
         show()
 
 # testing horizontal odd number of plots
@@ -59,7 +59,7 @@ def test_vert_even_plots():
         data = [normal(size=100) for i in range(6)]
         fig=figure()
         ax2 = fig.add_subplot(111)
-        ax2.violinplot(data, widths=0.5, title='Even Split', alpha=0.5, vert=True, split=True)
+        ax2.violinplot(data, widths=0.5, title='Even Split Vertical', alpha=0.5, vert=True, split=True)
         show()
 
 # testing vetical even number of plots
@@ -67,7 +67,17 @@ def test_vert_odd_plots():
         data = [normal(size=100) for i in range(7)]
         fig=figure()
         ax2 = fig.add_subplot(111)
-        ax2.violinplot(data, widths=0.5, title='Even Split', alpha=0.5, vert=True, split=True)
+        ax2.violinplot(data, widths=0.5, title='Odd Split Vertical', alpha=0.5, vert=True, split=True)
+        show()
+
+# testing vetical even number of plots with custom labels
+def test_vert_odd_plots_labels():
+        data = [normal(size=100) for i in range(7)]
+        fig=figure()
+        ax2 = fig.add_subplot(111)
+        ax2.violinplot(data, widths=0.5, title='Odd Split Vertical Custom labels', alpha=0.5,
+                    vert=True, split=True, plot_labels=['a', 'b', 'c', 'd', 'e',
+                                                        'f', 'g'])
         show()
 
 
@@ -107,20 +117,24 @@ if __name__=="__main__":
     try:
         test_horizontal_odd_plots()
     except:
-        print traceback.format_exc()
         print ("Failure: test_horizontal_odd_plots() failed; unable to draw "
             "odd number of split horizontal violin plots.")
 
     try:
         test_vert_even_plots()
-    except Exception as e:
-        print str(e)
+    except:
         print ("Failure: test_vert_even_plots() failed; unable to draw "
             "even number of split vertical violin plots.")
 
     try:
         test_vert_odd_plots()
-    except Exception as e:
-        print str(e)
+    except:
         print ("Failure: test_vert_even_plots() failed; unable to draw "
             "odd number of split vertical violin plots.")
+
+    try:
+        test_vert_odd_plots_labels()
+    except:
+        print traceback.format_exc()
+        print ("Failure: test_vert_odd_plots_labels() failed; unable to draw "
+            "odd number of split vertical violin plots, with custom labels.")
