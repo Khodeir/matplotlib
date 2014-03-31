@@ -6959,8 +6959,13 @@ class Axes(_AxesBase):
             med_x = [p]
 
             # Box points
-            box_left = p - width * 0.15
-            box_right = p + width * 0.15
+            if split:
+                split_p = np.ceil(p/2)
+                box_left = split_p - width * 0.15
+                box_right = split_p + width * 0.15
+            else:
+                box_left = p - width * 0.15
+                box_right = p + width * 0.15
             box_x = [box_left, box_right, box_right, box_left, box_left]
             box_y = [stats['q1'], stats['q1'], stats['q3'], stats['q3'],
                      stats['q1']]
@@ -7022,8 +7027,12 @@ class Axes(_AxesBase):
             dopatch(box_x, box_y, **final_boxprops)
             #doplot(box_x, box_y, **final_boxprops)
             doplot(med_x, med_y, **final_medianprops)
-            doplot(whisker_x, whiskerlo_y, **final_whiskerprops)
-            doplot(whisker_x, whiskerhi_y, **final_whiskerprops)
+            if vert:
+                doplot(whisker_x, whiskerlo_y, **final_whiskerprops)
+                doplot(whisker_x, whiskerhi_y, **final_whiskerprops)
+            else:
+                doplot(whiskerlo_y, whisker_x,  **final_whiskerprops)
+                doplot(whiskerhi_y, whisker_x,  **final_whiskerprops)
 
 
         # Set the title and labels for each violin plot.
