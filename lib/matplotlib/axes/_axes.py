@@ -6785,7 +6785,11 @@ class Axes(_AxesBase):
             stats = []
             for d in data:
                 perviolinstats = {}
-                k = kdefunc(d)
+                try:
+                    k = kdefunc(d)
+                except Exception:
+                    stats.append(None)
+                    continue
                 #kdefunc sets the default covariance_factor to scotts factor
                 if covariance_factor: k.covariance_factor = covariance_factor
                 m = k.dataset.min() #lower bound of violin
@@ -6805,9 +6809,9 @@ class Axes(_AxesBase):
         numplots = len(data)
         vert = kwargs.pop("vert", True)
 
-      	# Extract title, labels and colors for the violin plots.
-      	title = kwargs.pop("title", None)
-      	violin_labels = kwargs.pop("plot_labels", None)
+        # Extract title, labels and colors for the violin plots.
+        title = kwargs.pop("title", None)
+        violin_labels = kwargs.pop("plot_labels", None)
 
         if (violin_labels) and (type(violin_labels) is not list):
             raise ValueError("Invalid labels")
@@ -6937,6 +6941,10 @@ class Axes(_AxesBase):
         previousp = 0;
 
         for p, vp, stats, width in zip(positions,vpstats, bxpstats, widths):
+            #If vpstats for this is None, then we count use gaussian kde
+            #this usually means the dataset was a singular matrix
+            if not vp:
+                continue
             # Whisker points
             whisker_x = np.ones(2) * p
             whiskerlo_y = np.array([stats['q1'], stats['whislo']])
