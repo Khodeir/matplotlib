@@ -6776,6 +6776,10 @@ class Axes(_AxesBase):
         facecolor : scalar or array-like, optional
             the colors of the violinplot face
             facecolor has priority over color
+
+        split : boolean, default: False
+                  specifying whether to split and merge two plots together;
+                  helps conserve space, compare plots.
         ----------------
 
         """
