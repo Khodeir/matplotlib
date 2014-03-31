@@ -11,7 +11,7 @@ def test_no_split():
         data = [normal(size=100) for i in range(5)]
         fig=figure()
         ax2 = fig.add_subplot(111)
-        ax2.violinplot(data, widths=0.5, title='Not Split', alpha=0.5, vert=False, split=False)
+        ax2.violinplot(data, widths=0.75, title='Not Split', alpha=0.5, vert=False, split=False)
         show()
 
 # testing when we want to draw regular vertical violins
@@ -19,7 +19,7 @@ def test_no_split_vert():
         data = [normal(size=100) for i in range(5)]
         fig=figure()
         ax2 = fig.add_subplot(111)
-        ax2.violinplot(data, widths=0.5, title='Not Split Vert', alpha=0.5, vert=True, split=False)
+        ax2.violinplot(data, widths=0.75, title='Not Split Vert', alpha=0.5, vert=True, split=False)
         show()
 
 # test when we want to draw regular normal violins without passing the 'split' arg
@@ -27,7 +27,7 @@ def test_no_split_noarg():
         data = [normal(size=100) for i in range(5)]
         fig=figure()
         ax2 = fig.add_subplot(111)
-        ax2.violinplot(data, widths=0.5, title='Not Split', alpha=0.5, vert=False)
+        ax2.violinplot(data, widths=0.75, title='Not Split', alpha=0.5, vert=False)
         show()
 
 # testing when we want to draw regular vertical violins without passing 'split' arg
@@ -35,7 +35,7 @@ def test_no_split_vert_noarg():
         data = [normal(size=100) for i in range(5)]
         fig=figure()
         ax2 = fig.add_subplot(111)
-        ax2.violinplot(data, widths=0.5, title='Not Split Vert', alpha=0.5, vert=True)
+        ax2.violinplot(data, widths=0.75, title='Not Split Vert', alpha=0.5, vert=True)
         show()
 
 # testing horizontal even number of plots
@@ -51,7 +51,7 @@ def test_horizontal_odd_plots():
         data = [normal(size=100) for i in range(7)]
         fig=figure()
         ax2 = fig.add_subplot(111)
-        ax2.violinplot(data, widths=0.5, title='Odd Split', alpha=0.5, vert=False, split=True)
+        ax2.violinplot(data, widths=0.75, title='Odd Split', alpha=0.5, vert=False, split=True)
         show()
 
 # testing vertical even number of plots
@@ -59,7 +59,7 @@ def test_vert_even_plots():
         data = [normal(size=100) for i in range(6)]
         fig=figure()
         ax2 = fig.add_subplot(111)
-        ax2.violinplot(data, widths=0.5, title='Even Split Vertical', alpha=0.5, vert=True, split=True)
+        ax2.violinplot(data, widths=0.75, title='Even Split Vertical', alpha=0.5, vert=True, split=True)
         show()
 
 # testing vetical even number of plots
@@ -67,7 +67,7 @@ def test_vert_odd_plots():
         data = [normal(size=100) for i in range(7)]
         fig=figure()
         ax2 = fig.add_subplot(111)
-        ax2.violinplot(data, widths=0.5, title='Odd Split Vertical', alpha=0.5, vert=True, split=True)
+        ax2.violinplot(data, widths=0.75, title='Odd Split Vertical', alpha=0.5, vert=True, split=True)
         show()
 
 # testing vetical even number of plots with custom labels
@@ -75,9 +75,19 @@ def test_vert_odd_plots_labels():
         data = [normal(size=100) for i in range(7)]
         fig=figure()
         ax2 = fig.add_subplot(111)
-        ax2.violinplot(data, widths=0.5, title='Odd Split Vertical Custom labels', alpha=0.5,
+        ax2.violinplot(data, widths=0.75, title='Odd Split Vertical Custom labels', alpha=0.5,
                     vert=True, split=True, plot_labels=['a', 'b', 'c', 'd', 'e',
                                                         'f', 'g'])
+        show()
+
+# testing vetical even number of plots with custom labels
+def test_vert_even_plots_labels():
+        data = [normal(size=100) for i in range(8)]
+        fig=figure()
+        ax2 = fig.add_subplot(111)
+        ax2.violinplot(data, widths=0.75, title='Odd Split Vertical Custom labels', alpha=0.5,
+                    vert=True, split=True, plot_labels=['a', 'b', 'c', 'd', 'e',
+                                                        'f', 'g', 'h'])
         show()
 
 
@@ -135,6 +145,11 @@ if __name__=="__main__":
     try:
         test_vert_odd_plots_labels()
     except:
-        print traceback.format_exc()
         print ("Failure: test_vert_odd_plots_labels() failed; unable to draw "
             "odd number of split vertical violin plots, with custom labels.")
+
+    try:
+        test_vert_even_plots_labels()
+    except:
+        print ("Failure: test_vert_even_plots_labels() failed; unable to draw "
+            "even number of split vertical violin plots, with custom labels.")

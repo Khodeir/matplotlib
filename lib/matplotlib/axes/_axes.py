@@ -6939,7 +6939,7 @@ class Axes(_AxesBase):
         #quartiles and median line.
         bxpstats = cbook.boxplot_stats(data)
         final_boxprops = dict(edgecolor='none', facecolor='black')
-        final_medianprops = dict(linestyle='solid', marker='o', 
+        final_medianprops = dict(linestyle='solid', marker='o',
             color='white', markersize=15*widths)
         final_whiskerprops = dict(linestyle='solid', color='black', linewidth=1)
         #check if the violins are to be split in half
@@ -6980,26 +6980,26 @@ class Axes(_AxesBase):
                 med_y = [stats['med'], stats['med']]
                 if flip:
                   #Right half
-                  med_x = [previousp, previousp+(max(v)*0.80)]
+                  med_x = [previousp, previousp+(max(v)*0.94)]
                   self.fill_betweenx(vp['sample_points'],previousp,previousp+v,
                                       **kwargs)
                 else:
                   #Left half
                   previousp = split_p
-                  med_x = [split_p, split_p-(max(v)*0.80)]
+                  med_x = [split_p, split_p-(max(v)*0.94)]
                   self.fill_betweenx(vp['sample_points'],split_p,split_p-v, **kwargs)
                 flip = not flip
               else:
                 med_x = [stats['med'], stats['med']]
                 if flip:
                   #Top half
-                  med_y = [previousp, previousp+(max(v)*0.80)]
+                  med_y = [previousp, previousp+(max(v)*0.94)]
                   self.fill_between(vp['sample_points'],previousp , previousp+v,
                                       **kwargs)
                 else:
                   #Bottom half
                   previousp = split_p
-                  med_y = [split_p, split_p-(max(v)*0.80)]
+                  med_y = [split_p, split_p-(max(v)*0.94)]
                   self.fill_between(vp['sample_points'],split_p,split_p-v, **kwargs)
                 flip = not flip
             #Whole violins
