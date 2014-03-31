@@ -6776,9 +6776,6 @@ class Axes(_AxesBase):
         facecolor : scalar or array-like, optional
             the colors of the violinplot face
             facecolor has priority over color
-
-        edgecolor : scalar or array-like, optional
-            the colors of the violinplot edges
         ----------------
 
         """
@@ -6818,8 +6815,12 @@ class Axes(_AxesBase):
         color = kwargs.pop("facecolor", None)
         if color is None:
             color = kwargs.pop("color", None)
-        edgecolor = kwargs.pop("edgecolor", None)
         quartile = kwargs.pop("quartile", None)
+
+
+        #check if the violins are to be split in half
+        split = kwargs.pop('split', None)
+        flip = False
 
         if positions is None:
             positions = list(xrange(1, numplots + 1))
@@ -6838,8 +6839,14 @@ class Axes(_AxesBase):
 
         # checking and setting default color options
         try:
-            if color is None:
+            if color is None and split is None:
                 color = list(mcolors.colorConverter.to_rgba_array('b')) * numplots
+            elif color is None and split is not None:
+                color=[]
+                color.append(mcolors.colorConverter.to_rgba_array('b'))
+                color.append(mcolors.colorConverter.to_rgba_array('r'))
+                if len(color) < numplots:
+                    color *= numplots
             else:
                 color = list(mcolors.colorConverter.to_rgba_array(color))
                 if len(color) == 0:  # until to_rgba_array is changed
@@ -6848,21 +6855,6 @@ class Axes(_AxesBase):
                     color *= numplots
         except:
             raise ValueError("The color provided is not supported")
-
-        # checking and setting default edgecolor options
-        try:
-            if edgecolor is None:
-                edgecolor = list(mcolors.colorConverter.to_rgba_array('k')) * numplots
-            else:
-                edgecolor = list(mcolors.colorConverter.to_rgba_array(edgecolor))
-                if len(edgecolor) == 0:  # until to_rgba_array is changed
-                    color = [[0, 0, 0, 0]]
-                if len(edgecolor) < numplots:
-                    edgecolor *= numplots
-        except:
-            raise ValueError("The color provided is not supported")
-
-
 
         #
         # STEALING FROM BOXPLOT BEGINS
@@ -6908,27 +6900,27 @@ class Axes(_AxesBase):
 
 
 
-        ################# QUARTILE COLORING PLAN ###################
-        # ** figure out how to get specific values from boxplot **
-        # ** use the getp()?                                    **
+        # ################# QUARTILE COLORING PLAN ###################
+        # # ** figure out how to get specific values from boxplot **
+        # # ** use the getp()?                                    **
+        # #
+        # #  - for each violin
+        # #    - get boxplot edges and median
+        # #    - store data in "where" array
+        # #    - apply "where" array to the fill_between below
+        # #      such that we split it into 4 sections and pass in different
+        # #      values for each section
         #
-        #  - for each violin
-        #    - get boxplot edges and median
-        #    - store data in "where" array
-        #    - apply "where" array to the fill_between below
-        #      such that we split it into 4 sections and pass in different
-        #      values for each section
-
-        #quartile color handling
-        if quartile is None:
-            pass
-        elif quartile is not True and not False:
-            raise ValueError("Quartile input expects either True or False")
-        else:
-            # get box quartile values and median to know where to divide the data
-            quart_boxplot = boxplot(data)
-            boxes = getp(quart_boxplot, boxes)
-            median = getp(quart_boxplot, median)
+        # #quartile color handling
+        # if quartile is None:
+        #     pass
+        # elif quartile is not True and not False:
+        #     raise ValueError("Quartile input expects either True or False")
+        # else:
+        #     # get box quartile values and median to know where to divide the data
+        #     quart_boxplot = boxplot(data)
+        #     boxes = getp(quart_boxplot, boxes)
+        #     median = getp(quart_boxplot, median)
 
 
         #Calculate statistics about violins
@@ -6939,12 +6931,9 @@ class Axes(_AxesBase):
         #quartiles and median line.
         bxpstats = cbook.boxplot_stats(data)
         final_boxprops = dict(edgecolor='none', facecolor='black')
-        final_medianprops = dict(linestyle='solid', marker='o', 
+        final_medianprops = dict(linestyle='solid', marker='o',
             color='white', markersize=15*widths)
         final_whiskerprops = dict(linestyle='solid', color='black', linewidth=1)
-        #check if the violins are to be split in half
-        split = kwargs.pop('split', None)
-        flip = False
         previousp = 0;
 
         for p,vp, in zip(positions,vpstats):
