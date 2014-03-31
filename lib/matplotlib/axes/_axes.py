@@ -6915,6 +6915,7 @@ class Axes(_AxesBase):
 
             #Split half which alternatively flip
             if split:
+              split_p = np.ceil(p/2)
               final_medianprops = dict(linestyle='solid', color='black')
               if vert:
                 med_y = [stats['med'], stats['med']]
@@ -6925,9 +6926,9 @@ class Axes(_AxesBase):
                                       **kwargs)
                 else:
                   #Left half
-                  previousp = p
-                  med_x = [p, p-(max(v)*0.80)]
-                  self.fill_betweenx(vp['sample_points'],p,p-v, **kwargs)
+                  previousp = split_p
+                  med_x = [split_p, split_p-(max(v)*0.80)]
+                  self.fill_betweenx(vp['sample_points'],split_p,split_p-v, **kwargs)
                 flip = not flip
               else:
                 med_x = [stats['med'], stats['med']]
@@ -6938,9 +6939,9 @@ class Axes(_AxesBase):
                                       **kwargs)
                 else:
                   #Bottom half
-                  previousp = p
-                  med_y = [p, p-(max(v)*0.80)]
-                  self.fill_between(vp['sample_points'],p,p-v, **kwargs)
+                  previousp = split_p
+                  med_y = [split_p, split_p-(max(v)*0.80)]
+                  self.fill_between(vp['sample_points'],split_p,split_p-v, **kwargs)
                 flip = not flip
             #Whole violins
             else:
@@ -6964,15 +6965,41 @@ class Axes(_AxesBase):
             self.set_title(title)
 
         # Set the number of ticks equal to the number of violins.
-        if vert:
-            self.set_xticks(range(numplots+1))
+        if split:
+          if vert:
+              self.set_xticks(range(int(np.ceil(numplots/2)+2)))
+          else:
+              self.set_yticks(range(int(np.ceil(numplots/2)+2)))
         else:
-            self.set_yticks(range(numplots+1))
+          if vert:
+              self.set_xticks(range(numplots+1))
+          else:
+              self.set_yticks(range(numplots+1))
 
-        # Must prepend a 0 to the labels.
+        # Add in a blank label at the 0 index, so first label isn't on the axis
+        if split:
+          if (violin_labels and len(violin_labels) > 1):
+            temp_labels = []
+            labels_len = len(violin_labels)
+            if (labels_len%2 == 1):
+              labels_len = labels_len - 1
+
+            i = 0
+            while (i < labels_len):
+              if vert:
+                temp_labels.append(violin_labels[i] + "-" + violin_labels[i+1])
+              else:
+                temp_labels.append(violin_labels[i] + "\n" + violin_labels[i+1])
+              i = i + 2
+
+            if (len(violin_labels)%2 == 1):
+              temp_labels.append(violin_labels[i])
+            violin_labels = temp_labels
+
+
         if (violin_labels):
             violin_labels.insert(0, "")
-            violin_labels.insert(numplots + 1, "")
+            violin_labels.append("")
             if vert:
                 self.set_xticklabels(violin_labels)
             else:
