@@ -11,7 +11,7 @@ def test_no_split():
         data = [normal(size=100) for i in range(5)]
         fig=figure()
         ax2 = fig.add_subplot(111)
-        ax2.violinplot(data, widths=0.75, title='Not Split', alpha=0.5, vert=False, split=False)
+        ax2.violinplot(data, widths=0.5, title='Not Split', alpha=0.5, vert=False, split=False)
         show()
 
 # testing when we want to draw regular vertical violins
@@ -19,7 +19,11 @@ def test_no_split_vert():
         data = [normal(size=100) for i in range(5)]
         fig=figure()
         ax2 = fig.add_subplot(111)
+<<<<<<< HEAD
         ax2.violinplot(data, widths=0.75, title='Not Split Vert', alpha=0.5, split=False)
+=======
+        ax2.violinplot(data, widths=0.5, title='Not Split Vert', alpha=0.5, vert=True, split=False)
+>>>>>>> 241012b888bb2e5c4ad4b92d44931792b72e744e
         show()
 
 # test when we want to draw regular normal violins without passing the 'split' arg
@@ -27,7 +31,7 @@ def test_no_split_noarg():
         data = [normal(size=100) for i in range(5)]
         fig=figure()
         ax2 = fig.add_subplot(111)
-        ax2.violinplot(data, widths=0.75, title='Not Split', alpha=0.5, vert=False)
+        ax2.violinplot(data, widths=0.5, title='Not Split', alpha=0.5, vert=False)
         show()
 
 # testing when we want to draw regular vertical violins without passing 'split' arg
@@ -43,7 +47,7 @@ def test_horizontal_even_plots():
         data = [normal(size=100) for i in range(6)]
         fig=figure()
         ax2 = fig.add_subplot(111)
-        ax2.violinplot(data, widths=0.75, title='Even Split', alpha=0.5, vert=False, split=True)
+        ax2.violinplot(data, widths=0.5, title='Even Split', alpha=0.5, vert=False, split=True)
         show()
 
 # testing horizontal odd number of plots
@@ -51,7 +55,7 @@ def test_horizontal_odd_plots():
         data = [normal(size=100) for i in range(7)]
         fig=figure()
         ax2 = fig.add_subplot(111)
-        ax2.violinplot(data, widths=0.75, title='Odd Split', alpha=0.5, vert=False, split=True)
+        ax2.violinplot(data, widths=0.5, title='Odd Split', alpha=0.5, vert=False, split=True)
         show()
 
 # testing vertical even number of plots
@@ -161,6 +165,7 @@ if __name__=="__main__":
     try:
         test_horizontal_odd_plots()
     except:
+        print traceback.format_exc()
         print ("Failure: test_horizontal_odd_plots() failed; unable to draw "
             "odd number of split horizontal violin plots.")
 

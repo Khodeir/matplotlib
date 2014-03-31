@@ -6776,9 +6776,6 @@ class Axes(_AxesBase):
         facecolor : scalar or array-like, optional
             the colors of the violinplot face
             facecolor has priority over color
-
-        edgecolor : scalar or array-like, optional
-            the colors of the violinplot edges
         ----------------
 
         """
@@ -6788,7 +6785,11 @@ class Axes(_AxesBase):
             stats = []
             for d in data:
                 perviolinstats = {}
-                k = kdefunc(d)
+                try:
+                    k = kdefunc(d)
+                except Exception:
+                    stats.append(None)
+                    continue
                 #kdefunc sets the default covariance_factor to scotts factor
                 if covariance_factor: k.covariance_factor = covariance_factor
                 m = k.dataset.min() #lower bound of violin
@@ -6808,9 +6809,9 @@ class Axes(_AxesBase):
         numplots = len(data)
         vert = kwargs.pop("vert", True)
 
-      	# Extract title, labels and colors for the violin plots.
-      	title = kwargs.pop("title", None)
-      	violin_labels = kwargs.pop("plot_labels", None)
+        # Extract title, labels and colors for the violin plots.
+        title = kwargs.pop("title", None)
+        violin_labels = kwargs.pop("plot_labels", None)
 
         if (violin_labels) and (type(violin_labels) is not list):
             raise ValueError("Invalid labels")
@@ -6818,17 +6819,21 @@ class Axes(_AxesBase):
         color = kwargs.pop("facecolor", None)
         if color is None:
             color = kwargs.pop("color", None)
-        edgecolor = kwargs.pop("edgecolor", None)
         quartile = kwargs.pop("quartile", None)
+
+
+        #check if the violins are to be split in half
+        split = kwargs.pop('split', None)
+        flip = False
 
         if positions is None:
             positions = list(xrange(1, numplots + 1))
         elif len(positions) != numplots:
             raise ValueError("Length of specified positions vector doesn't \
                               match data.")
-        elif sorted(positions) != range(numplots):
+        elif sorted(positions) != range(1, numplots + 1):
             raise ValueError("Specified positions are invalid. Only use \
-                              positions in range(0,n).")
+                              positions in range(1,n+1).")
 
         if widths is None or not np.isscalar(widths):
             widths = [0.75]*numplots
@@ -6838,8 +6843,14 @@ class Axes(_AxesBase):
 
         # checking and setting default color options
         try:
-            if color is None:
+            if color is None and split is None:
                 color = list(mcolors.colorConverter.to_rgba_array('b')) * numplots
+            elif color is None and split is not None:
+                color=[]
+                color.append(mcolors.colorConverter.to_rgba_array('b'))
+                color.append(mcolors.colorConverter.to_rgba_array('r'))
+                if len(color) < numplots:
+                    color *= numplots
             else:
                 color = list(mcolors.colorConverter.to_rgba_array(color))
                 if len(color) == 0:  # until to_rgba_array is changed
@@ -6848,21 +6859,6 @@ class Axes(_AxesBase):
                     color *= numplots
         except:
             raise ValueError("The color provided is not supported")
-
-        # checking and setting default edgecolor options
-        try:
-            if edgecolor is None:
-                edgecolor = list(mcolors.colorConverter.to_rgba_array('k')) * numplots
-            else:
-                edgecolor = list(mcolors.colorConverter.to_rgba_array(edgecolor))
-                if len(edgecolor) == 0:  # until to_rgba_array is changed
-                    color = [[0, 0, 0, 0]]
-                if len(edgecolor) < numplots:
-                    edgecolor *= numplots
-        except:
-            raise ValueError("The color provided is not supported")
-
-
 
         #
         # STEALING FROM BOXPLOT BEGINS
@@ -6908,27 +6904,27 @@ class Axes(_AxesBase):
 
 
 
-        ################# QUARTILE COLORING PLAN ###################
-        # ** figure out how to get specific values from boxplot **
-        # ** use the getp()?                                    **
+        # ################# QUARTILE COLORING PLAN ###################
+        # # ** figure out how to get specific values from boxplot **
+        # # ** use the getp()?                                    **
+        # #
+        # #  - for each violin
+        # #    - get boxplot edges and median
+        # #    - store data in "where" array
+        # #    - apply "where" array to the fill_between below
+        # #      such that we split it into 4 sections and pass in different
+        # #      values for each section
         #
-        #  - for each violin
-        #    - get boxplot edges and median
-        #    - store data in "where" array
-        #    - apply "where" array to the fill_between below
-        #      such that we split it into 4 sections and pass in different
-        #      values for each section
-
-        #quartile color handling
-        if quartile is None:
-            pass
-        elif quartile is not True and not False:
-            raise ValueError("Quartile input expects either True or False")
-        else:
-            # get box quartile values and median to know where to divide the data
-            quart_boxplot = boxplot(data)
-            boxes = getp(quart_boxplot, boxes)
-            median = getp(quart_boxplot, median)
+        # #quartile color handling
+        # if quartile is None:
+        #     pass
+        # elif quartile is not True and not False:
+        #     raise ValueError("Quartile input expects either True or False")
+        # else:
+        #     # get box quartile values and median to know where to divide the data
+        #     quart_boxplot = boxplot(data)
+        #     boxes = getp(quart_boxplot, boxes)
+        #     median = getp(quart_boxplot, median)
 
 
         #Calculate statistics about violins
@@ -6940,28 +6936,35 @@ class Axes(_AxesBase):
         bxpstats = cbook.boxplot_stats(data)
         final_boxprops = dict(edgecolor='none', facecolor='black')
         final_medianprops = dict(linestyle='solid', marker='o',
-            color='white', markersize=15*widths)
+            color='white', markersize=15 * widths)
         final_whiskerprops = dict(linestyle='solid', color='black', linewidth=1)
-        #check if the violins are to be split in half
-        split = kwargs.pop('split', None)
-        flip = False
         previousp = 0;
 
-        for p,vp, in zip(positions,vpstats):
-            stats = bxpstats[p-1]
+        for p, vp, stats, width in zip(positions,vpstats, bxpstats, widths):
+            #If vpstats for this is None, then we count use gaussian kde
+            #this usually means the dataset was a singular matrix
+            if not vp:
+                continue
             # Whisker points
-            #whisker_x = np.ones(2) * p
-            #whiskerlo_y = np.array([stats['q1'], stats['whislo']])
-            #whiskerhi_y = np.array([stats['q3'], stats['whishi']])
-            # Box points
-            #box_left = p - widths * 0.05
-            #box_right = p + widths * 0.05
-            #box_x = [box_left, box_right, box_right, box_left, box_left]
-            #box_y = [stats['q1'], stats['q1'], stats['q3'], stats['q3'],
-            #         stats['q1']]
+            whisker_x = np.ones(2) * p
+            whiskerlo_y = np.array([stats['q1'], stats['whislo']])
+            whiskerhi_y = np.array([stats['q3'], stats['whishi']])
+
             # Median point
             med_y = [stats['med']]
             med_x = [p]
+
+            # Box points
+            if split:
+                split_p = np.ceil(p/2)
+                box_left = split_p - width * 0.15
+                box_right = split_p + width * 0.15
+            else:
+                box_left = p - width * 0.15
+                box_right = p + width * 0.15
+            box_x = [box_left, box_right, box_right, box_left, box_left]
+            box_y = [stats['q1'], stats['q1'], stats['q3'], stats['q3'],
+                     stats['q1']]
 
 
             # setting color into kwargs for fill_between
@@ -6974,8 +6977,8 @@ class Axes(_AxesBase):
 
             #Split half which alternatively flip
             if split:
+              final_medianprops = dict(linestyle='solid', color='white')
               split_p = np.ceil(p/2)
-              final_medianprops = dict(linestyle='solid', color='black')
               if vert:
                 med_y = [stats['med'], stats['med']]
                 if flip:
@@ -7005,7 +7008,7 @@ class Axes(_AxesBase):
             #Whole violins
             else:
               final_medianprops = dict(linestyle='solid', marker='o',
-                                        color='black')
+                                        color='white')
               if vert:
                   med_y = [stats['med']]
                   med_x = [p]
@@ -7017,10 +7020,15 @@ class Axes(_AxesBase):
                   self.fill_between(vp['sample_points'],p,p+v, **kwargs)
                   self.fill_between(vp['sample_points'],p,p-v, **kwargs)
 
-            #dopatch(box_x, box_y, **final_boxprops)
+            dopatch(box_x, box_y, **final_boxprops)
+            #doplot(box_x, box_y, **final_boxprops)
             doplot(med_x, med_y, **final_medianprops)
-            #doplot(whisker_x, whiskerlo_y, **final_whiskerprops)
-            #doplot(whisker_x, whiskerhi_y, **final_whiskerprops)
+            if vert:
+                doplot(whisker_x, whiskerlo_y, **final_whiskerprops)
+                doplot(whisker_x, whiskerhi_y, **final_whiskerprops)
+            else:
+                doplot(whiskerlo_y, whisker_x,  **final_whiskerprops)
+                doplot(whiskerhi_y, whisker_x,  **final_whiskerprops)
 
 
         # Set the title and labels for each violin plot.
