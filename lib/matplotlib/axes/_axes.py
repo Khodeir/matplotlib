@@ -7052,7 +7052,7 @@ class Axes(_AxesBase):
               if vert:
                 temp_labels.append(violin_labels[i] + "-" + violin_labels[i+1])
               else:
-                temp_labels.append(violin_labels[i] + "\n" + violin_labels[i+1])
+                temp_labels.append(violin_labels[i+1] + "\n" + violin_labels[i])
               i = i + 2
 
             if (len(violin_labels)%2 == 1):
