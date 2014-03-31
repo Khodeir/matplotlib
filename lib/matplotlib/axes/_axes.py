@@ -6940,28 +6940,30 @@ class Axes(_AxesBase):
         bxpstats = cbook.boxplot_stats(data)
         final_boxprops = dict(edgecolor='none', facecolor='black')
         final_medianprops = dict(linestyle='solid', marker='o', 
-            color='white', markersize=15*widths)
+            color='white', markersize=15 * widths)
         final_whiskerprops = dict(linestyle='solid', color='black', linewidth=1)
         #check if the violins are to be split in half
         split = kwargs.pop('split', None)
         flip = False
         previousp = 0;
 
-        for p,vp, in zip(positions,vpstats):
+        for p, vp, width in zip(positions,vpstats, widths):
             stats = bxpstats[p-1]
             # Whisker points
-            #whisker_x = np.ones(2) * p
-            #whiskerlo_y = np.array([stats['q1'], stats['whislo']])
-            #whiskerhi_y = np.array([stats['q3'], stats['whishi']])
-            # Box points
-            #box_left = p - widths * 0.05
-            #box_right = p + widths * 0.05
-            #box_x = [box_left, box_right, box_right, box_left, box_left]
-            #box_y = [stats['q1'], stats['q1'], stats['q3'], stats['q3'],
-            #         stats['q1']]
+            whisker_x = np.ones(2) * p
+            whiskerlo_y = np.array([stats['q1'], stats['whislo']])
+            whiskerhi_y = np.array([stats['q3'], stats['whishi']])
+
             # Median point
             med_y = [stats['med']]
             med_x = [p]
+
+            # Box points
+            box_left = p - width * 0.15
+            box_right = p + width * 0.15
+            box_x = [box_left, box_right, box_right, box_left, box_left]
+            box_y = [stats['q1'], stats['q1'], stats['q3'], stats['q3'],
+                     stats['q1']]
 
 
             # setting color into kwargs for fill_between
@@ -6974,7 +6976,7 @@ class Axes(_AxesBase):
 
             #Split half which alternatively flip
             if split:
-              final_medianprops = dict(linestyle='solid', color='black')
+              final_medianprops = dict(linestyle='solid', color='white')
               if vert:
                 med_y = [stats['med'], stats['med']]
                 if flip:
@@ -7004,7 +7006,7 @@ class Axes(_AxesBase):
             #Whole violins
             else:
               final_medianprops = dict(linestyle='solid', marker='o',
-                                        color='black')
+                                        color='white')
               if vert:
                   med_y = [stats['med']]
                   med_x = [p]
@@ -7016,10 +7018,11 @@ class Axes(_AxesBase):
                   self.fill_between(vp['sample_points'],p,p+v, **kwargs)
                   self.fill_between(vp['sample_points'],p,p-v, **kwargs)
 
-            #dopatch(box_x, box_y, **final_boxprops)
+            dopatch(box_x, box_y, **final_boxprops)
+            #doplot(box_x, box_y, **final_boxprops)
             doplot(med_x, med_y, **final_medianprops)
-            #doplot(whisker_x, whiskerlo_y, **final_whiskerprops)
-            #doplot(whisker_x, whiskerhi_y, **final_whiskerprops)
+            doplot(whisker_x, whiskerlo_y, **final_whiskerprops)
+            doplot(whisker_x, whiskerhi_y, **final_whiskerprops)
 
 
         # Set the title and labels for each violin plot.
