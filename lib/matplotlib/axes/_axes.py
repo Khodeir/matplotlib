@@ -6932,25 +6932,32 @@ class Axes(_AxesBase):
         bxpstats = cbook.boxplot_stats(data)
         final_boxprops = dict(edgecolor='none', facecolor='black')
         final_medianprops = dict(linestyle='solid', marker='o',
-            color='white', markersize=15*widths)
+            color='white', markersize=15 * widths)
         final_whiskerprops = dict(linestyle='solid', color='black', linewidth=1)
         previousp = 0;
 
-        for p,vp, in zip(positions,vpstats):
+        for p, vp, width in zip(positions,vpstats, widths):
             stats = bxpstats[p-1]
             # Whisker points
-            #whisker_x = np.ones(2) * p
-            #whiskerlo_y = np.array([stats['q1'], stats['whislo']])
-            #whiskerhi_y = np.array([stats['q3'], stats['whishi']])
-            # Box points
-            #box_left = p - widths * 0.05
-            #box_right = p + widths * 0.05
-            #box_x = [box_left, box_right, box_right, box_left, box_left]
-            #box_y = [stats['q1'], stats['q1'], stats['q3'], stats['q3'],
-            #         stats['q1']]
+            whisker_x = np.ones(2) * p
+            whiskerlo_y = np.array([stats['q1'], stats['whislo']])
+            whiskerhi_y = np.array([stats['q3'], stats['whishi']])
+
             # Median point
             med_y = [stats['med']]
             med_x = [p]
+
+            # Box points
+            if split:
+                split_p = np.ceil(p/2)
+                box_left = split_p - width * 0.15
+                box_right = split_p + width * 0.15
+            else:
+                box_left = p - width * 0.15
+                box_right = p + width * 0.15
+            box_x = [box_left, box_right, box_right, box_left, box_left]
+            box_y = [stats['q1'], stats['q1'], stats['q3'], stats['q3'],
+                     stats['q1']]
 
 
             # setting color into kwargs for fill_between
@@ -6963,37 +6970,38 @@ class Axes(_AxesBase):
 
             #Split half which alternatively flip
             if split:
-              final_medianprops = dict(linestyle='solid', color='black')
+              final_medianprops = dict(linestyle='solid', color='white')
+              split_p = np.ceil(p/2)
               if vert:
                 med_y = [stats['med'], stats['med']]
                 if flip:
                   #Right half
-                  med_x = [previousp, previousp+(max(v)*0.80)]
+                  med_x = [previousp, previousp+(max(v)*0.94)]
                   self.fill_betweenx(vp['sample_points'],previousp,previousp+v,
                                       **kwargs)
                 else:
                   #Left half
-                  previousp = p
-                  med_x = [p, p-(max(v)*0.80)]
-                  self.fill_betweenx(vp['sample_points'],p,p-v, **kwargs)
+                  previousp = split_p
+                  med_x = [split_p, split_p-(max(v)*0.94)]
+                  self.fill_betweenx(vp['sample_points'],split_p,split_p-v, **kwargs)
                 flip = not flip
               else:
                 med_x = [stats['med'], stats['med']]
                 if flip:
                   #Top half
-                  med_y = [previousp, previousp+(max(v)*0.80)]
+                  med_y = [previousp, previousp+(max(v)*0.94)]
                   self.fill_between(vp['sample_points'],previousp , previousp+v,
                                       **kwargs)
                 else:
                   #Bottom half
-                  previousp = p
-                  med_y = [p, p-(max(v)*0.80)]
-                  self.fill_between(vp['sample_points'],p,p-v, **kwargs)
+                  previousp = split_p
+                  med_y = [split_p, split_p-(max(v)*0.94)]
+                  self.fill_between(vp['sample_points'],split_p,split_p-v, **kwargs)
                 flip = not flip
             #Whole violins
             else:
               final_medianprops = dict(linestyle='solid', marker='o',
-                                        color='black')
+                                        color='white')
               if vert:
                   med_y = [stats['med']]
                   med_x = [p]
@@ -7005,10 +7013,15 @@ class Axes(_AxesBase):
                   self.fill_between(vp['sample_points'],p,p+v, **kwargs)
                   self.fill_between(vp['sample_points'],p,p-v, **kwargs)
 
-            #dopatch(box_x, box_y, **final_boxprops)
+            dopatch(box_x, box_y, **final_boxprops)
+            #doplot(box_x, box_y, **final_boxprops)
             doplot(med_x, med_y, **final_medianprops)
-            #doplot(whisker_x, whiskerlo_y, **final_whiskerprops)
-            #doplot(whisker_x, whiskerhi_y, **final_whiskerprops)
+            if vert:
+                doplot(whisker_x, whiskerlo_y, **final_whiskerprops)
+                doplot(whisker_x, whiskerhi_y, **final_whiskerprops)
+            else:
+                doplot(whiskerlo_y, whisker_x,  **final_whiskerprops)
+                doplot(whiskerhi_y, whisker_x,  **final_whiskerprops)
 
 
         # Set the title and labels for each violin plot.
@@ -7016,15 +7029,41 @@ class Axes(_AxesBase):
             self.set_title(title)
 
         # Set the number of ticks equal to the number of violins.
-        if vert:
-            self.set_xticks(range(numplots+1))
+        if split:
+          if vert:
+              self.set_xticks(range(int(np.ceil(numplots/2)+2)))
+          else:
+              self.set_yticks(range(int(np.ceil(numplots/2)+2)))
         else:
-            self.set_yticks(range(numplots+1))
+          if vert:
+              self.set_xticks(range(numplots+1))
+          else:
+              self.set_yticks(range(numplots+1))
 
-        # Must prepend a 0 to the labels.
+        # Add in a blank label at the 0 index, so first label isn't on the axis
+        if split:
+          if (violin_labels and len(violin_labels) > 1):
+            temp_labels = []
+            labels_len = len(violin_labels)
+            if (labels_len%2 == 1):
+              labels_len = labels_len - 1
+
+            i = 0
+            while (i < labels_len):
+              if vert:
+                temp_labels.append(violin_labels[i] + "-" + violin_labels[i+1])
+              else:
+                temp_labels.append(violin_labels[i] + "\n" + violin_labels[i+1])
+              i = i + 2
+
+            if (len(violin_labels)%2 == 1):
+              temp_labels.append(violin_labels[i])
+            violin_labels = temp_labels
+
+
         if (violin_labels):
             violin_labels.insert(0, "")
-            violin_labels.insert(numplots + 1, "")
+            violin_labels.append("")
             if vert:
                 self.set_xticklabels(violin_labels)
             else:
