@@ -6780,6 +6780,16 @@ class Axes(_AxesBase):
         split : boolean, default: False
                   specifying whether to split and merge two plots together;
                   helps conserve space, compare plots.
+
+        plot_labels : list of strings that will be used to label the violin plots.
+
+        title : string that will be the title of the graph.
+
+        whiskers : boolean indicating whether the user desires whisker lines.
+
+        median : line if median lines are desired.
+                point if median points are desired - default.
+                none if neither are desired.
         ----------------
 
         """
@@ -6823,7 +6833,26 @@ class Axes(_AxesBase):
         color = kwargs.pop("facecolor", None)
         if color is None:
             color = kwargs.pop("color", None)
-        quartile = kwargs.pop("quartile", None)
+
+        # Determine hide/show settings for median lines/points, whiskers and
+        # quartile.
+        # Determine type of median display (line, point, none)
+        median = kwargs.pop("median", "point") 
+
+        if (median != "line") and (median != "point") and (median != "none"):
+            raise ValueError("Invalid median parameter - must be 'line', 'point' or 'none'.")
+
+        # true iff user wants to show whiskers.
+        show_whiskers = kwargs.pop("whiskers", False)
+
+        if (show_whiskers is not True) and (show_whiskers is not False):
+            raise ValueError("whiskers parameter must be True or False.")
+
+        # true iff user wants to show the quartile box
+        show_quartile = kwargs.pop("quartile", False)
+
+        if (show_quartile is not True) and (show_quartile is not False):
+            raise ValueError("quartile parameter must be True or False.")
 
 
         #check if the violins are to be split in half
@@ -7011,28 +7040,55 @@ class Axes(_AxesBase):
                 flip = not flip
             #Whole violins
             else:
-              final_medianprops = dict(linestyle='solid', marker='o',
-                                        color='white')
+
+              # Check the type of median display.
+              if median == "point":
+                final_medianprops = dict(linestyle='solid', marker='o',
+                                            color='white')
+                # Depending on whether vert is true or not, these values will either be
+                # med_x or med_y.
+                # med_info1 is the actual median value
+                # med_info2 is the position of the violin (middle part of violin widthwise)
+                med_info1 = [stats['med']]
+                med_info2 = [p]
+
+              elif median == "line":
+                final_medianprops = dict(linestyle='solid', color='white')
+
+                # Depending on whether vert is true or not, these values will either be
+                # med_x or med_y.
+                # med_info1 is the actual median value
+                # med_info2 is the position of the violin (middle part of violin widthwise)
+                med_info1 = [stats['med'], stats['med']]
+                med_info2 = [p-(max(v)), p+(max(v))]
+
               if vert:
-                  med_y = [stats['med']]
-                  med_x = [p]
+                  if median != "none":
+                    med_y = med_info1
+                    med_x = med_info2
                   self.fill_betweenx(vp['sample_points'],p,p+v, **kwargs)
                   self.fill_betweenx(vp['sample_points'],p,p-v, **kwargs)
               else:
-                  med_x = [stats['med']]
-                  med_y = [p]
+                  if median != "none":
+                    med_x = med_info1
+                    med_y = med_info2
                   self.fill_between(vp['sample_points'],p,p+v, **kwargs)
                   self.fill_between(vp['sample_points'],p,p-v, **kwargs)
 
-            dopatch(box_x, box_y, **final_boxprops)
+            if show_quartile:
+                dopatch(box_x, box_y, **final_boxprops)
             #doplot(box_x, box_y, **final_boxprops)
-            doplot(med_x, med_y, **final_medianprops)
-            if vert:
-                doplot(whisker_x, whiskerlo_y, **final_whiskerprops)
-                doplot(whisker_x, whiskerhi_y, **final_whiskerprops)
-            else:
-                doplot(whiskerlo_y, whisker_x,  **final_whiskerprops)
-                doplot(whiskerhi_y, whisker_x,  **final_whiskerprops)
+            if median != "none":
+                doplot(med_x, med_y, **final_medianprops)
+            
+            # Do whiskers if parameter is set.
+            if show_whiskers:
+                if vert:
+                    doplot(whisker_x, whiskerlo_y, **final_whiskerprops)
+                    doplot(whisker_x, whiskerhi_y, **final_whiskerprops)
+                else:
+                    doplot(whiskerlo_y, whisker_x,  **final_whiskerprops)
+                    doplot(whiskerhi_y, whisker_x,  **final_whiskerprops)
 
 
         # Set the title and labels for each violin plot.

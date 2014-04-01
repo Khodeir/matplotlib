@@ -64,7 +64,7 @@ def test_label_vertical():
         fig=figure()
         ax2 = fig.add_subplot(111)
         labels = ["A", "B"]
-        ax2.violinplot(data, widths=0.5, alpha=0.5, vert=True, plot_labels=labels)
+        ax2.violinplot(data, widths=0.5, alpha=0.5, plot_labels=labels)
         show()
 
 
