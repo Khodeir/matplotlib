@@ -6785,11 +6785,13 @@ class Axes(_AxesBase):
 
         title : string that will be the title of the graph.
 
-        whiskers : boolean indicating whether the user desires whisker lines.
+        whiskers : boolean indicating whether the user desires whisker lines - off by default.
 
         median : line if median lines are desired.
                 point if median points are desired - default.
                 none if neither are desired.
+
+        quartile : - boolean indicating whether the user desires quartile box - off by default.
         ----------------
 
         """
