@@ -6764,8 +6764,7 @@ class Axes(_AxesBase):
         vert: boolean, default: true
                 specifying orientation of violins, false for horizontal violins
 
-        covariance_factor: 0 arity lambda function returning a scaler or
-                             silvermans_factor function (numpy's gaussian_kde),
+        covariance_factor: 0 arity lambda function returning a scaler
                              default: scotts_factor from numpy's gaussian_kde
                 multiplies the data covariance matrix to obtain the kernel
                 covariance matrix
@@ -6777,8 +6776,21 @@ class Axes(_AxesBase):
             the colors of the violinplot face
             facecolor has priority over color
 
-        edgecolor : scalar or array-like, optional
-            the colors of the violinplot edges
+        split : boolean, default: False
+                  specifying whether to split and merge two plots together;
+                  helps conserve space, compare plots.
+
+        plot_labels : list of strings that will be used to label the violin plots.
+
+        title : string that will be the title of the graph.
+
+        whiskers : boolean indicating whether the user desires whisker lines - off by default.
+
+        median : line if median lines are desired.
+                point if median points are desired - default.
+                none if neither are desired.
+
+        quartile : - boolean indicating whether the user desires quartile box - off by default.
         ----------------
 
         """
@@ -6788,9 +6800,14 @@ class Axes(_AxesBase):
             stats = []
             for d in data:
                 perviolinstats = {}
-                k = kdefunc(d)
+                try:
+                    k = kdefunc(d)
+                except Exception:
+                    stats.append(None)
+                    continue
                 #kdefunc sets the default covariance_factor to scotts factor
                 if covariance_factor: k.covariance_factor = covariance_factor
+                k._compute_covariance()
                 m = k.dataset.min() #lower bound of violin
                 M = k.dataset.max() #upper bound of violin
                 x = perviolinstats['sample_points'] = np.linspace(m, M,
@@ -6808,9 +6825,9 @@ class Axes(_AxesBase):
         numplots = len(data)
         vert = kwargs.pop("vert", True)
 
-      	# Extract title, labels and colors for the violin plots.
-      	title = kwargs.pop("title", None)
-      	violin_labels = kwargs.pop("plot_labels", None)
+        # Extract title, labels and colors for the violin plots.
+        title = kwargs.pop("title", None)
+        violin_labels = kwargs.pop("plot_labels", None)
 
         if (violin_labels) and (type(violin_labels) is not list):
             raise ValueError("Invalid labels")
@@ -6818,17 +6835,40 @@ class Axes(_AxesBase):
         color = kwargs.pop("facecolor", None)
         if color is None:
             color = kwargs.pop("color", None)
-        edgecolor = kwargs.pop("edgecolor", None)
-        quartile = kwargs.pop("quartile", None)
+
+        # Determine hide/show settings for median lines/points, whiskers and
+        # quartile.
+        # Determine type of median display (line, point, none)
+        median = kwargs.pop("median", "point") 
+
+        if (median != "line") and (median != "point") and (median != "none"):
+            raise ValueError("Invalid median parameter - must be 'line', 'point' or 'none'.")
+
+        # true iff user wants to show whiskers.
+        show_whiskers = kwargs.pop("whiskers", False)
+
+        if (show_whiskers is not True) and (show_whiskers is not False):
+            raise ValueError("whiskers parameter must be True or False.")
+
+        # true iff user wants to show the quartile box
+        show_quartile = kwargs.pop("quartile", False)
+
+        if (show_quartile is not True) and (show_quartile is not False):
+            raise ValueError("quartile parameter must be True or False.")
+
+
+        #check if the violins are to be split in half
+        split = kwargs.pop('split', None)
+        flip = False
 
         if positions is None:
             positions = list(xrange(1, numplots + 1))
         elif len(positions) != numplots:
             raise ValueError("Length of specified positions vector doesn't \
                               match data.")
-        elif sorted(positions) != range(numplots):
+        elif sorted(positions) != range(1, numplots + 1):
             raise ValueError("Specified positions are invalid. Only use \
-                              positions in range(0,n).")
+                              positions in range(1,n+1).")
 
         if widths is None or not np.isscalar(widths):
             widths = [0.75]*numplots
@@ -6838,8 +6878,14 @@ class Axes(_AxesBase):
 
         # checking and setting default color options
         try:
-            if color is None:
+            if color is None and split is None:
                 color = list(mcolors.colorConverter.to_rgba_array('b')) * numplots
+            elif color is None and split is not None:
+                color=[]
+                color.append(mcolors.colorConverter.to_rgba_array('b'))
+                color.append(mcolors.colorConverter.to_rgba_array('r'))
+                if len(color) < numplots:
+                    color *= numplots
             else:
                 color = list(mcolors.colorConverter.to_rgba_array(color))
                 if len(color) == 0:  # until to_rgba_array is changed
@@ -6848,21 +6894,6 @@ class Axes(_AxesBase):
                     color *= numplots
         except:
             raise ValueError("The color provided is not supported")
-
-        # checking and setting default edgecolor options
-        try:
-            if edgecolor is None:
-                edgecolor = list(mcolors.colorConverter.to_rgba_array('k')) * numplots
-            else:
-                edgecolor = list(mcolors.colorConverter.to_rgba_array(edgecolor))
-                if len(edgecolor) == 0:  # until to_rgba_array is changed
-                    color = [[0, 0, 0, 0]]
-                if len(edgecolor) < numplots:
-                    edgecolor *= numplots
-        except:
-            raise ValueError("The color provided is not supported")
-
-
 
         #
         # STEALING FROM BOXPLOT BEGINS
@@ -6908,27 +6939,27 @@ class Axes(_AxesBase):
 
 
 
-        ################# QUARTILE COLORING PLAN ###################
-        # ** figure out how to get specific values from boxplot **
-        # ** use the getp()?                                    **
+        # ################# QUARTILE COLORING PLAN ###################
+        # # ** figure out how to get specific values from boxplot **
+        # # ** use the getp()?                                    **
+        # #
+        # #  - for each violin
+        # #    - get boxplot edges and median
+        # #    - store data in "where" array
+        # #    - apply "where" array to the fill_between below
+        # #      such that we split it into 4 sections and pass in different
+        # #      values for each section
         #
-        #  - for each violin
-        #    - get boxplot edges and median
-        #    - store data in "where" array
-        #    - apply "where" array to the fill_between below
-        #      such that we split it into 4 sections and pass in different
-        #      values for each section
-
-        #quartile color handling
-        if quartile is None:
-            pass
-        elif quartile is not True and not False:
-            raise ValueError("Quartile input expects either True or False")
-        else:
-            # get box quartile values and median to know where to divide the data
-            quart_boxplot = boxplot(data)
-            boxes = getp(quart_boxplot, boxes)
-            median = getp(quart_boxplot, median)
+        # #quartile color handling
+        # if quartile is None:
+        #     pass
+        # elif quartile is not True and not False:
+        #     raise ValueError("Quartile input expects either True or False")
+        # else:
+        #     # get box quartile values and median to know where to divide the data
+        #     quart_boxplot = boxplot(data)
+        #     boxes = getp(quart_boxplot, boxes)
+        #     median = getp(quart_boxplot, median)
 
 
         #Calculate statistics about violins
@@ -6939,16 +6970,16 @@ class Axes(_AxesBase):
         #quartiles and median line.
         bxpstats = cbook.boxplot_stats(data)
         final_boxprops = dict(edgecolor='none', facecolor='black')
-        final_medianprops = dict(linestyle='solid', marker='o', 
+        final_medianprops = dict(linestyle='solid', marker='o',
             color='white', markersize=15 * widths)
         final_whiskerprops = dict(linestyle='solid', color='black', linewidth=1)
-        #check if the violins are to be split in half
-        split = kwargs.pop('split', None)
-        flip = False
         previousp = 0;
 
-        for p, vp, width in zip(positions,vpstats, widths):
-            stats = bxpstats[p-1]
+        for p, vp, stats, width in zip(positions,vpstats, bxpstats, widths):
+            #If vpstats for this is None, then we count use gaussian kde
+            #this usually means the dataset was a singular matrix
+            if not vp:
+                continue
             # Whisker points
             whisker_x = np.ones(2) * p
             whiskerlo_y = np.array([stats['q1'], stats['whislo']])
@@ -7011,28 +7042,55 @@ class Axes(_AxesBase):
                 flip = not flip
             #Whole violins
             else:
-              final_medianprops = dict(linestyle='solid', marker='o',
-                                        color='white')
+
+              # Check the type of median display.
+              if median == "point":
+                final_medianprops = dict(linestyle='solid', marker='o',
+                                            color='white')
+                # Depending on whether vert is true or not, these values will either be
+                # med_x or med_y.
+                # med_info1 is the actual median value
+                # med_info2 is the position of the violin (middle part of violin widthwise)
+                med_info1 = [stats['med']]
+                med_info2 = [p]
+
+              elif median == "line":
+                final_medianprops = dict(linestyle='solid', color='white')
+
+                # Depending on whether vert is true or not, these values will either be
+                # med_x or med_y.
+                # med_info1 is the actual median value
+                # med_info2 is the position of the violin (middle part of violin widthwise)
+                med_info1 = [stats['med'], stats['med']]
+                med_info2 = [p-(max(v)), p+(max(v))]
+
               if vert:
-                  med_y = [stats['med']]
-                  med_x = [p]
+                  if median != "none":
+                    med_y = med_info1
+                    med_x = med_info2
                   self.fill_betweenx(vp['sample_points'],p,p+v, **kwargs)
                   self.fill_betweenx(vp['sample_points'],p,p-v, **kwargs)
               else:
-                  med_x = [stats['med']]
-                  med_y = [p]
+                  if median != "none":
+                    med_x = med_info1
+                    med_y = med_info2
                   self.fill_between(vp['sample_points'],p,p+v, **kwargs)
                   self.fill_between(vp['sample_points'],p,p-v, **kwargs)
 
-            dopatch(box_x, box_y, **final_boxprops)
+            if show_quartile:
+                dopatch(box_x, box_y, **final_boxprops)
+            #doplot(box_x, box_y, **final_boxprops)
+            if median != "none":
+                doplot(med_x, med_y, **final_medianprops)
             
-            if vert:
-                doplot(whisker_x, whiskerlo_y, **final_whiskerprops)
-                doplot(whisker_x, whiskerhi_y, **final_whiskerprops)
-            else:
-                doplot(whiskerlo_y, whisker_x,  **final_whiskerprops)
-                doplot(whiskerhi_y, whisker_x,  **final_whiskerprops)
-            doplot(med_x, med_y, **final_medianprops)
+            # Do whiskers if parameter is set.
+            if show_whiskers:
+                if vert:
+                    doplot(whisker_x, whiskerlo_y, **final_whiskerprops)
+                    doplot(whisker_x, whiskerhi_y, **final_whiskerprops)
+                else:
+                    doplot(whiskerlo_y, whisker_x,  **final_whiskerprops)
+                    doplot(whiskerhi_y, whisker_x,  **final_whiskerprops)
 
 
         # Set the title and labels for each violin plot.
@@ -7064,7 +7122,7 @@ class Axes(_AxesBase):
               if vert:
                 temp_labels.append(violin_labels[i] + "-" + violin_labels[i+1])
               else:
-                temp_labels.append(violin_labels[i] + "\n" + violin_labels[i+1])
+                temp_labels.append(violin_labels[i+1] + "\n" + violin_labels[i])
               i = i + 2
 
             if (len(violin_labels)%2 == 1):

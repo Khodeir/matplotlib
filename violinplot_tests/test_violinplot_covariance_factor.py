@@ -13,26 +13,12 @@ def test_covariance_default():
         ax.violinplot(data)
         show()
 
-# test covariance_factor is set to silvermans factor
-def test_covariance_silvermans():
-        data = [normal(size=100) for i in range(5)]
-        fig=figure()
-        ax = fig.add_subplot(111)
-        try:
-            from scipy.stats import gaussian_kde
-        except ImportError as e:
-            print("You don't have scipy.")
-            return
-        cv = gaussian_kde.silverman_factor
-        ax.violinplot(data, covariance_factor=cv)
-        show()
-
 # test covariance_factor is set to custom factor for steepness
 def test_covariance_custom_steep():
         data = [normal(size=100) for i in range(5)]
         fig=figure()
         ax = fig.add_subplot(111)
-        cv = lambda : 0.01
+        cv = lambda : 0.1
         ax.violinplot(data, covariance_factor=cv)
         show()
 
@@ -56,15 +42,6 @@ if __name__=="__main__":
         print '    Success: Test #1 Passed (it build and displayed)'
     except ValueError:
         print '    Failure: Test #1 Failed to run'
-
-
-    print 'Running Test #2: covariance_factor is silvermans factor'
-    try:
-        print '    Manual check that covariance is set to silvermans factor'
-        test_covariance_silvermans()
-        print '    Success: Test #2 Passed (it build and displayed)'
-    except ValueError:
-        print '    Failure: Test #2 Failed to run'
 
 
     print 'Running Test #3: covariance_factor is custom set for steep curves'
