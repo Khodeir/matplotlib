@@ -19,12 +19,8 @@ def test_no_split_vert():
         data = [normal(size=100) for i in range(5)]
         fig=figure()
         ax2 = fig.add_subplot(111)
-<<<<<<< HEAD
         ax2.violinplot(data, widths=0.75, title='Not Split Vert', alpha=0.5, split=False)
-=======
-        ax2.violinplot(data, widths=0.5, title='Not Split Vert', alpha=0.5, vert=True, split=False)
->>>>>>> 241012b888bb2e5c4ad4b92d44931792b72e744e
-        show()
+
 
 # test when we want to draw regular normal violins without passing the 'split' arg
 def test_no_split_noarg():
