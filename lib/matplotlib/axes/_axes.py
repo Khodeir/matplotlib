@@ -6764,8 +6764,7 @@ class Axes(_AxesBase):
         vert: boolean, default: true
                 specifying orientation of violins, false for horizontal violins
 
-        covariance_factor: 0 arity lambda function returning a scaler or
-                             silvermans_factor function (numpy's gaussian_kde),
+        covariance_factor: 0 arity lambda function returning a scaler
                              default: scotts_factor from numpy's gaussian_kde
                 multiplies the data covariance matrix to obtain the kernel
                 covariance matrix
@@ -6808,6 +6807,7 @@ class Axes(_AxesBase):
                     continue
                 #kdefunc sets the default covariance_factor to scotts factor
                 if covariance_factor: k.covariance_factor = covariance_factor
+                k._compute_covariance()
                 m = k.dataset.min() #lower bound of violin
                 M = k.dataset.max() #upper bound of violin
                 x = perviolinstats['sample_points'] = np.linspace(m, M,
